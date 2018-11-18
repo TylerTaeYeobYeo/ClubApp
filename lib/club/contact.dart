@@ -25,7 +25,7 @@ class _ContactPageState extends State<ContactPage>{
 
   @override
   void initState() {
-    term = Firestore.instance.collection('clubs').document(data.documentID).collection('users').snapshots();
+    term = Firestore.instance.collection('clubs').document(data.documentID).collection('users').orderBy("name").snapshots();
     super.initState();
   }
 

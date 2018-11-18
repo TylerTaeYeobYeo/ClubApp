@@ -1,0 +1,416 @@
+import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+
+import 'package:project_club2/club/contact.dart';
+import 'package:project_club2/club/setting.dart';
+import 'package:project_club2/global/currentUser.dart' as cu;
+
+
+class ClubPage extends StatefulWidget {
+  final DocumentSnapshot data;
+  ClubPage({Key key, @required this.data})
+    : assert(data != null),
+    super(key: key);
+  _ClubPageState createState() => _ClubPageState(data: data);
+}
+
+class _ClubPageState extends State<ClubPage> {
+  final GlobalKey<ScaffoldState> _scaffoldKey = new GlobalKey();
+  int level;
+  TextEditingController _request = new TextEditingController();
+  DocumentSnapshot data;
+  _ClubPageState({Key key, @required this.data})
+    : assert(data != null);
+  @override
+  void initState() {
+    super.initState();
+    level = cu.currentUser.club.getLevel();
+  }
+  @override
+  void dispose() { 
+    _request.dispose();
+    cu.currentUser.club.exit();
+    super.dispose();
+  }
+
+  Widget imageController (DocumentSnapshot data){
+    if(data.data['body']['image'].length == 0) return SizedBox();
+    else {
+      int len = data.data['body']['image'].length;
+      switch(len){
+        case 1:
+          return Container(
+            height: 300.0,
+            width: MediaQuery.of(context).size.width,
+            padding: EdgeInsets.symmetric(vertical: 5.0),
+            child: Hero(
+                tag: data.data['body']['image'][0],
+                child: Image(
+                  image: NetworkImage(data.data['body']['image'][0]),
+                  fit: BoxFit.fitWidth,
+                ),
+              ),
+          );
+          break;
+        case 2: 
+        return 
+        Container(
+            margin: EdgeInsets.symmetric(vertical: 5.0),
+            child: Row(
+              children: <Widget>[
+                FlatButton(
+                  child: SizedBox(
+                    height: 300.0,
+                    width: MediaQuery.of(context).size.width/2-4,
+                    child: Hero(
+                      tag: data.data['body']['image'][0],
+                      child: Image(
+                        image: NetworkImage(data.data['body']['image'][0]),
+                        fit: BoxFit.cover,
+                      ),
+                    ),
+                  ),
+                  padding: EdgeInsets.all(0.0),
+                  onPressed: (){
+                    // print("page1");
+                  },
+                ),
+                FlatButton(
+                  child: SizedBox(
+                    height: 300.0,
+                    width: MediaQuery.of(context).size.width/2-4,
+                    child: Hero(
+                      tag: data.data['body']['image'][1],
+                      child: Image(
+                        image: NetworkImage(data.data['body']['image'][1]),
+                        fit: BoxFit.cover,
+                      ),
+                    ),
+                  ),
+                  padding: EdgeInsets.all(0.0),
+                  onPressed: (){},
+                ),
+              ],
+            ),
+          );
+          break;
+        default:
+          return Container(
+            margin: EdgeInsets.symmetric(vertical: 5.0),
+            child: Row(
+              children: <Widget>[
+                FlatButton(
+                  child: SizedBox(
+                    height: 300.0,
+                    width: MediaQuery.of(context).size.width*2/3-4,
+                    child: Hero(
+                      tag: data.data['body']['image'][0],
+                      child: Image(
+                        image: NetworkImage(data.data['body']['image'][0]),
+                        fit: BoxFit.cover,
+                      ),
+                    ),
+                  ),
+                  padding: EdgeInsets.all(0.0),
+                  onPressed: (){
+                    // print("page1");
+                  },
+                ),
+                Column(
+                  children: <Widget>[
+                    FlatButton(
+                      child: SizedBox(
+                        height: 150.0,
+                        width: MediaQuery.of(context).size.width/3-4,
+                        child: Hero(
+                          tag: data.data['body']['image'][1],
+                          child: Image(
+                            image: NetworkImage(data.data['body']['image'][1]),
+                            fit: BoxFit.cover,
+                          ),
+                        ),
+                      ),
+                      padding: EdgeInsets.all(0.0),
+                      onPressed: (){},
+                    ),
+                    FlatButton(
+                      child: Stack(
+                        children: <Widget>[
+                          SizedBox(
+                            height: 150.0,
+                            width: MediaQuery.of(context).size.width/3-4,
+                            child: Hero(
+                              tag: data.data['body']['image'][2],
+                              child: Image(
+                                image: NetworkImage(data.data['body']['image'][2]),
+                                fit: BoxFit.cover,
+                              ),
+                            ),
+                          ),
+                          len-3>0?Container(
+                            height: 150.0,
+                            width: MediaQuery.of(context).size.width/3 - 4,
+                            decoration:BoxDecoration(
+                              color: Colors.black26
+                            ),
+                            child: Center(
+                              child:Text("+${len - 3}",
+                                style: TextStyle(
+                                  fontSize: 40.0,
+                                  color: Colors.white,
+                                ),
+                              ),
+                            ),
+                          ):SizedBox(),
+                        ],
+                      ),
+                      padding: EdgeInsets.all(0.0),
+                      onPressed: (){
+                        print(3);
+                      },
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          );
+          break;
+      }
+    }
+  }
+
+  Widget _requestButton(){
+    bool a = data.data['adv'];
+    if(a && cu.currentUser.club.getLevel() < 2)
+      return ButtonBar(
+        children: <Widget>[
+          FlatButton(
+            child: Text("가입신청", 
+              style: TextStyle(color: a?Theme.of(context).primaryColor:Colors.grey),
+            ),
+            onPressed: ()=>_clicked(),
+          ),
+        ],
+      );
+    else return SizedBox();
+  }
+  Future<Null> _clicked() async {
+    return showDialog<Null>(
+      context: context,
+      barrierDismissible: false, // user must tap button!
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: ListTile(
+            leading: CircleAvatar(
+              backgroundImage: NetworkImage(data.data["image"]),
+            ),
+            title: Text(data.data['name']),
+            trailing: Text(data.data['type'],style: TextStyle(color: Colors.grey,fontSize: 12.0),),
+          ),
+          contentPadding: EdgeInsets.all(30.0),
+          content: Container(
+            child: TextField(
+              controller: _request,
+              decoration: InputDecoration(
+                hintText: "각오를 적어주세요\n*모집기간이 아니거나*\n*기존회원이 아닐경우*\n*거부될 수도 있습니다*",
+              ),
+              maxLines: 5,
+            ),
+          ),
+          actions: <Widget>[
+            FlatButton(
+              child: Text("취소"),
+              onPressed: ()=>Navigator.pop(context),
+            ),
+            RaisedButton(
+              child: Text("신청",style: TextStyle(color: Colors.white),),
+              disabledColor: Colors.grey,
+              color: Theme.of(context).primaryColor,
+              onPressed: ()async {
+                Navigator.pop(context);
+                await Firestore.instance.collection('clubs').document(data.documentID).collection('request').document(cu.currentUser.getUid()).setData({
+                    "uid": cu.currentUser.getUid(),
+                    "name": cu.currentUser.getDisplayName(),
+                    "email": cu.currentUser.getEmail(),
+                    "phoneNumber": cu.currentUser.getPhoneNumber(),
+                    "photoUrl": cu.currentUser.getphotoUrl(),
+                    "content": _request.text,
+                  }
+                );
+                _request.clear();
+              },
+            ),
+          ],
+        );
+      }
+    );
+  }
+
+  Drawer _drawer(){
+    if(cu.currentUser.club.getLevel()>1)
+      return Drawer(
+        child: Column(
+          children: <Widget>[
+            UserAccountsDrawerHeader(
+              currentAccountPicture: CircleAvatar(
+                  backgroundImage: NetworkImage(cu.currentUser.getphotoUrl()),
+                ),
+              accountName: Text(cu.currentUser.getDisplayName()),
+              accountEmail: Text(cu.currentUser.getEmail()),
+            ),
+            ListTile(
+              leading: Icon(Icons.home),
+              title: Text("메인"),
+              onTap: (){Navigator.popUntil(context, ModalRoute.withName('/home'));},
+            ),
+            ListTile(
+              leading: Icon(Icons.school),
+              title: Text("수업자료"),
+            ),
+            ListTile(
+              leading: Icon(Icons.folder),
+              title: Text("동아리자료"),
+            ),
+            ListTile(
+              leading: Icon(Icons.call),
+              title: Text("연락처"),
+              onTap: (){
+                Navigator.pop(context);
+                Navigator.push(context, 
+                  MaterialPageRoute(
+                    builder: (context) => ContactPage(data: data),
+                  )
+                );
+              },
+            ),
+            cu.currentUser.club.getLevel()==3?ListTile(
+              leading: Icon(Icons.settings),
+              title: Text("임원단 메뉴"),
+              onTap: (){
+                Navigator.pop(context);
+                Navigator.push(context, 
+                  MaterialPageRoute(
+                    builder: (context) => ClubSettingPage(data: data),
+                  )
+                );
+              },
+            ):SizedBox(),
+          ],
+        ),
+      );
+    else return null;
+  }
+
+  Widget _buildListItem(BuildContext context, DocumentSnapshot data) {
+    int type = data.data['head']['type'];
+    String typed = "공개";
+    switch(type){
+      case 1: typed="동아리";
+      break;
+      case 2: typed="임원단";
+      break;
+    }
+    return Card(
+      key: ValueKey(data.data['id']),
+      child: Column(
+        children: <Widget>[
+          // Image.network(data.data['body']['image'][0]),
+          imageController(data),
+          ListTile(   
+            leading: CircleAvatar(
+              backgroundImage: NetworkImage(data.data['head']['photoUrl']),
+            ),
+            title: Text(data.data['head']['writer']),
+            subtitle: Text(data.data['head']['date'].toString()),
+            trailing: Text(typed),
+          ),
+          Container(
+            padding: EdgeInsets.all(20.0),
+            child: Text(data.data['body']['content']),
+          ),
+        ],
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      key: _scaffoldKey,
+      // floatingActionButton: _floating(),
+      drawer: _drawer(),
+      body: Stack(
+        children: <Widget>[
+          Center(
+            child: Image.asset('assets/logo/logo1.png',fit: BoxFit.contain,color:Theme.of(context).primaryColor,)
+          ),
+          NestedScrollView(
+            headerSliverBuilder: (BuildContext context, bool innerBoxIsScrolled) {
+              return <Widget>[
+                SliverAppBar(
+                  expandedHeight: MediaQuery.of(context).size.height /4,
+                  pinned: true,
+                  flexibleSpace: FlexibleSpaceBar(
+                    centerTitle: true,
+                    title: Text(data.data['name'],
+                      style: TextStyle(
+                        fontSize: 18.0,
+                      )
+                    ),
+                    background: Hero(
+                      tag: data.data['id'],
+                      child:Container(
+                          decoration: new BoxDecoration(
+                          image: new DecorationImage(image: new NetworkImage(data.data['image']), fit:BoxFit.cover,),
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ];
+            },
+            body: ListView(
+              children: <Widget>[
+                Card(
+                  child: Column(
+                    children: <Widget>[
+                      ExpansionTile(
+                        title: Text("동아리소개"),
+                        children: <Widget>[
+                          Container(
+                            padding: EdgeInsets.all(20.0),
+                            child: Text(data.data['description']),
+                          ),
+                        ],
+                      ),
+                      ExpansionTile(
+                        initiallyExpanded: data.data['adv'],
+                        title: Text("가입하기"),
+                        children: <Widget>[
+                          Container(
+                            padding: EdgeInsets.all(20.0),
+                            child: Text(data.data['advertisement']),
+                          ),
+                          _requestButton()
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+                StreamBuilder<QuerySnapshot>(
+                  stream: Firestore.instance.collection('clubs').document(data.data['id']).collection('Board').where('head.type',isLessThanOrEqualTo: level).snapshots(),
+                  builder: (context, snapshot) {
+                    if (!snapshot.hasData) return LinearProgressIndicator();
+                    return Column(
+                      children: snapshot.data.documents.map((data) => _buildListItem(context, data)).toList(),
+                    );
+                  },
+                )
+              ] 
+            ),
+          ),
+        ],
+      )
+    );
+  }
+}

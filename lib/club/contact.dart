@@ -123,7 +123,6 @@ class _ContactPageState extends State<ContactPage>{
                           }
                         }
                         return Card(
-                          // color: Colors.white70,
                           child: ExpansionTile(
                             trailing: a>2?Icon(Icons.star,color: Colors.yellow,):null,
                             title: Text(user.data['name']),

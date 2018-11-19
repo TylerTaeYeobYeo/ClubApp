@@ -47,26 +47,23 @@ class _ClubSettingPageState extends State<ClubSettingPage> {
                   ),
                 ),
                 Card(
-                  color: Colors.white70,
                   child:ExpansionTile(
-                    initiallyExpanded: true,
                     leading: Icon(Icons.new_releases, color: Theme.of(context).primaryColor),
                     title: Text("리쿠르팅"),
-                    trailing: Switch(
-                      value: data.data['adv'],
-                      onChanged: (bool value) {
-                        setState(() {
-                          data.data['adv'] = value;
-                          Firestore.instance.collection('clubs').document(data.documentID).updateData({
-                            "adv": value,
-                          });
-                        });
-                      },
-                    ),
                     children: <Widget>[
-                      ListTile(
+                      SwitchListTile(
+                        secondary: Icon(Icons.people, color: Theme.of(context).primaryColorLight,),
                         title: Text("활성화 시 동아리 가입신청을 받을 수 있습니다."),
-                      )
+                        value: data.data['adv'],
+                        onChanged: (bool value) {
+                          setState(() {
+                            data.data['adv'] = value;
+                            Firestore.instance.collection('clubs').document(data.documentID).updateData({
+                              "adv": value,
+                            });
+                          });
+                        },
+                      ),
                     ],
                   ),
                 ),
@@ -113,12 +110,13 @@ class _ClubSettingPageState extends State<ClubSettingPage> {
                     title: Text("동아리 패쇄"),
                     children: <Widget>[
                       ListTile(
+                        leading: Icon(Icons.delete_outline, ),
                         title: RichText(
                           text:TextSpan(
                             text: "동아리를 ",
                             style: TextStyle(color: Colors.black),
                             children: [
-                              TextSpan(text: "삭제",style: TextStyle(color: Colors.red)),
+                              TextSpan(text: "패쇄",style: TextStyle(color: Colors.red)),
                               TextSpan(text: "하시면 "),
                               TextSpan(text: "복구",style: TextStyle(color: Colors.red)),
                               TextSpan(text: "가 되지 않습니다."),

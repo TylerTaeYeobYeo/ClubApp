@@ -94,15 +94,16 @@ class _HomePageState extends State<HomePage> {
                 accountName: Text(cu.currentUser.getDisplayName()),
                 accountEmail: Text(cu.currentUser.getEmail()),
               ),
+              cu.currentUser.getAdmin()==true?ListTile(
+                leading: Icon(Icons.settings_applications),
+                title: Text("관리자 설정"),
+                onTap: (){
+                  Navigator.pushNamed(context, '/appSetting');
+                },
+              ):SizedBox(),
               ListTile(
                 leading: Icon(Icons.settings),
                 title: Text("설정"),
-                onTap: (){
-                },
-              ),
-              ListTile(
-                leading: Icon(Icons.person_outline),
-                title: Text("개인정보"),
                 onTap: (){
                   Navigator.pop(context);
                   Navigator.pushNamed(context, '/personal');

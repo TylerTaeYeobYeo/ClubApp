@@ -27,7 +27,7 @@ class _PersonalPageState extends State<PersonalPage> {
       key: key,
       appBar: AppBar(
         centerTitle: true,
-        title: Text("개인정보"),
+        title: Text("설정"),
       ),
       body: Stack(
         children: <Widget>[
@@ -36,6 +36,15 @@ class _PersonalPageState extends State<PersonalPage> {
           ),
           ListView(
             children: <Widget>[
+              Card(
+                child: ListTile(
+                  title: Text("푸쉬 알림허용"),
+                  trailing: Switch(
+                    onChanged: (s){},
+                    value: true,
+                  ),
+                ),
+              ),
               Card(
                 child: ExpansionTile(
                   initiallyExpanded: true,
@@ -50,7 +59,7 @@ class _PersonalPageState extends State<PersonalPage> {
                             return ExpansionTile(
                               leading: CircleAvatar(backgroundImage: NetworkImage(data.data['image'])), 
                               title: Text(data.data['name']),
-                              trailing: Text(data.data['type']),
+                              // trailing: Text(data.data['type']),
                               children: <Widget>[
                                 ListTile(
                                   leading: Icon(Icons.face,color: Theme.of(context).primaryColor),
@@ -120,7 +129,7 @@ class _PersonalPageState extends State<PersonalPage> {
               ),
               Card(
                 child: ExpansionTile(
-                  initiallyExpanded: true,
+                  // initiallyExpanded: true,
                   title: Text("로그인정보"),
                   children: <Widget>[
                     ListTile(

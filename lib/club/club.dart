@@ -19,6 +19,8 @@ class _ClubPageState extends State<ClubPage> {
   int level;
   TextEditingController _request = new TextEditingController();
   DocumentSnapshot data;
+  TextEditingController _new = new TextEditingController();
+
   _ClubPageState({Key key, @required this.data})
     : assert(data != null);
   @override
@@ -397,6 +399,54 @@ class _ClubPageState extends State<ClubPage> {
                     ],
                   ),
                 ),
+                cu.currentUser.club.getLevel()>1
+                ?Card(
+                  // color: Theme.of(context).primaryColorLight,
+                  child: ExpansionTile(
+                    leading: CircleAvatar(
+                        backgroundImage: NetworkImage(cu.currentUser.getphotoUrl()),
+                      ),
+                    title: ListTile(
+                      title: Text(cu.currentUser.getDisplayName()),
+                      subtitle: Text(DateTime.now().toLocal().toString()),
+                    ),
+                    trailing: Text("글쓰기"),
+                    children: <Widget>[
+                      ListTile(
+                        title: Container(
+                          padding: EdgeInsets.symmetric(horizontal: 20.0),
+                          child: Column(
+                            children: <Widget>[
+                              TextField(
+                                controller: _new,
+                                maxLines: 5,
+                                keyboardType: TextInputType.multiline,
+                                decoration: InputDecoration(
+                                  hintText: "오늘의 동아리는 어떤가요?",
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        trailing: IconButton(
+                          icon: Icon(Icons.send),
+                        ),
+                      ),
+                      ListTile(
+                        leading: IconButton(
+                          icon: Icon(Icons.camera_alt),
+                        ),
+                        title: Expanded(
+                          child: ListView(
+                            scrollDirection: Axis.horizontal,
+                            children: <Widget>[],
+                          ),
+                        )
+                      )
+                    ],
+                  )
+                )
+                :SizedBox(),
                 StreamBuilder<QuerySnapshot>(
                   stream: Firestore.instance.collection('clubs').document(data.data['id']).collection('Board').where('head.type',isLessThanOrEqualTo: level).snapshots(),
                   builder: (context, snapshot) {

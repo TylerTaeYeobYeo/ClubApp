@@ -110,7 +110,7 @@ class _ClubSettingPageState extends State<ClubSettingPage> {
                     title: Text("동아리 패쇄"),
                     children: <Widget>[
                       ListTile(
-                        leading: Icon(Icons.delete_outline, ),
+                        leading: Icon(Icons.delete_forever, color: Colors.red),
                         title: RichText(
                           text:TextSpan(
                             text: "동아리를 ",

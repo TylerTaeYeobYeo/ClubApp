@@ -8,6 +8,7 @@ class CurrentUser {
   String _photoUrl;
   String _uid;
   String _phoneNumber;
+  bool _admin;
   DocumentSnapshot db;
   CurrentClub club = CurrentClub();
   final GoogleSignIn _googleSignIn = new GoogleSignIn();
@@ -19,9 +20,16 @@ class CurrentUser {
   String getPhoneNumber(){
     return _phoneNumber;
   }
+  bool getAdmin(){return _admin;}
   setUser(DocumentSnapshot db){
     this.db = db;
   }
+  setAdmin(dynamic value){ 
+    if(value!=null)
+      _admin = value;
+    else _admin = false;
+  }
+
   void setCurrentUser(
     displayName,
     email,
@@ -43,6 +51,7 @@ class CurrentUser {
     _uid = null;
     _phoneNumber = null;
     db = null;
+    _admin = false;
   }
 
   googleLogIn(){

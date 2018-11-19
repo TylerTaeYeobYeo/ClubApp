@@ -8,6 +8,8 @@ import 'package:project_club2/global/currentUser.dart' as cu;
 import 'package:project_club2/home.dart';
 import 'package:project_club2/new.dart';
 import 'package:project_club2/personal.dart';
+import 'package:project_club2/setting.dart';
+
 void main() => runApp(RouteApp());
 
 class RouteApp extends StatelessWidget {
@@ -25,6 +27,7 @@ class RouteApp extends StatelessWidget {
         '/home':(context)=>HomePage(),
         '/new':(context)=>NewClubPage(),
         '/personal':(context)=>PersonalPage(),
+        '/appSetting':(context)=>AppSettingPage(),
       },
     );
   }
@@ -56,6 +59,7 @@ class LoginPage extends StatelessWidget {
     setCurrentUser(user);
     Firestore.instance.collection('users').document(user.uid).get().then((doc){
       if (doc.exists){
+        cu.currentUser.setAdmin(doc.data['admin']);
         Firestore.instance.collection('users').document(user.uid).updateData({
           "uid": user.uid,
           "photoUrl":user.photoUrl,

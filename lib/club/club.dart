@@ -1,10 +1,13 @@
 import 'package:flutter/material.dart';
+import 'dart:io';
 import 'package:cloud_firestore/cloud_firestore.dart';
-
+import 'package:image_picker/image_picker.dart';
 import 'package:project_club2/club/contact.dart';
 import 'package:project_club2/club/setting.dart';
 import 'package:project_club2/global/currentUser.dart' as cu;
-
+import 'package:project_club2/club/image.dart';
+import 'package:firebase_storage/firebase_storage.dart';
+import 'package:uuid/uuid.dart';
 
 class ClubPage extends StatefulWidget {
   final DocumentSnapshot data;
@@ -16,11 +19,15 @@ class ClubPage extends StatefulWidget {
 
 class _ClubPageState extends State<ClubPage> {
   final GlobalKey<ScaffoldState> _scaffoldKey = new GlobalKey();
+  Key open = ValueKey(false);
   int level;
   TextEditingController _request = new TextEditingController();
   DocumentSnapshot data;
   TextEditingController _new = new TextEditingController();
-
+  File _image;
+  List<File> _images = List();
+  List<String> _types = ["공개","동아리","임원"].toList();
+  String type = "공개";
   _ClubPageState({Key key, @required this.data})
     : assert(data != null);
   @override
@@ -33,6 +40,15 @@ class _ClubPageState extends State<ClubPage> {
     _request.dispose();
     cu.currentUser.club.exit();
     super.dispose();
+  }
+
+  Future getImage() async {
+    var image = await ImagePicker.pickImage(source: ImageSource.gallery);
+    if (image ==null) return;
+    setState(() {
+      _image = image;
+      _images.add(_image);
+    });
   }
 
   Widget imageController (DocumentSnapshot data){
@@ -337,6 +353,12 @@ class _ClubPageState extends State<ClubPage> {
 
   @override
   Widget build(BuildContext context) {
+    final dropdownMenuOptions = _types
+      .map((String item) =>
+        new DropdownMenuItem<String>(value: item, child: new Text(item))
+      )
+      .toList();
+
     return Scaffold(
       key: _scaffoldKey,
       // floatingActionButton: _floating(),
@@ -352,6 +374,8 @@ class _ClubPageState extends State<ClubPage> {
                 SliverAppBar(
                   expandedHeight: MediaQuery.of(context).size.height /4,
                   pinned: true,
+                  // floating: true,
+                  // snap: true,
                   flexibleSpace: FlexibleSpaceBar(
                     centerTitle: true,
                     title: Text(data.data['name'],
@@ -403,6 +427,7 @@ class _ClubPageState extends State<ClubPage> {
                 ?Card(
                   // color: Theme.of(context).primaryColorLight,
                   child: ExpansionTile(
+                    key: open,
                     leading: CircleAvatar(
                         backgroundImage: NetworkImage(cu.currentUser.getphotoUrl()),
                       ),
@@ -414,7 +439,46 @@ class _ClubPageState extends State<ClubPage> {
                     children: <Widget>[
                       ListTile(
                         title: Container(
-                          padding: EdgeInsets.symmetric(horizontal: 20.0),
+                          decoration: BoxDecoration(
+                            image: DecorationImage(
+                              image: AssetImage('assets/logo/image2.png'),
+                              fit: BoxFit.fitWidth,
+                              // colorFilter: ColorFilter.mode(Colors.orange, BlendMode.dst)
+                            )
+                          ),
+                          height: 50.0,
+                          width: 300.0,
+                          child: ListView.builder(
+                            scrollDirection: Axis.horizontal,
+                            itemCount: _images.length,
+                            itemBuilder: (context, int index){
+                              return Container(
+                                width: 100.0,
+                                height: 100.0,
+                                padding: EdgeInsets.symmetric(horizontal: 4.0),
+                                child: FlatButton(
+                                  padding: EdgeInsets.all(0.0),
+                                  child: Image.file(_images[index], fit: BoxFit.cover),
+                                  onPressed: ()=>Navigator.push(context, 
+                                    MaterialPageRoute(
+                                      builder: (context) => ImagePage(image: _images[index],),
+                                    )
+                                  ),
+                                ),
+                              );
+                            },
+                          ),
+                        ),
+                        trailing: IconButton(
+                          icon: Icon(Icons.camera_alt),
+                          color: Theme.of(context).primaryColor,
+                          onPressed: ()=>getImage(),
+                        ),
+                      ),
+                      Divider(color: Colors.grey,),
+                      ListTile(
+                        title: Container(
+                          padding: EdgeInsets.symmetric(vertical: 20.0),
                           child: Column(
                             children: <Widget>[
                               TextField(
@@ -428,27 +492,87 @@ class _ClubPageState extends State<ClubPage> {
                             ],
                           ),
                         ),
-                        trailing: IconButton(
-                          icon: Icon(Icons.send),
-                        ),
-                      ),
-                      ListTile(
-                        leading: IconButton(
-                          icon: Icon(Icons.camera_alt),
-                        ),
-                        title: Expanded(
-                          child: ListView(
-                            scrollDirection: Axis.horizontal,
-                            children: <Widget>[],
-                          ),
+                        trailing: Column(
+                          children: <Widget>[
+                            DropdownButton(
+                              value: type,
+                              items: dropdownMenuOptions,
+                              onChanged: (String value) {
+                                setState(() {
+                                  type = value;
+                                });
+                              },
+                            ),
+                            IconButton(
+                              icon: Icon(Icons.send),
+                              color: Theme.of(context).primaryColor,
+                              onPressed: ()async{
+                                  if(_new.text =="") showDialog(
+                                    context: context,
+                                    builder: (context){
+                                      return AlertDialog(
+                                        title: Text("내용이 없습니다!"),
+                                        actions: <Widget>[
+                                          FlatButton(
+                                            child: Text("확인"),
+                                            onPressed: ()=>Navigator.pop(context),
+                                          )
+                                        ],
+                                      );
+                                    }
+                                  );
+                                  else{
+                                    List<String> im = List();
+                                    for(int i =0;i<_images.length;i++){
+                                      String name = Uuid().v4();
+                                      StorageUploadTask uploadTask = FirebaseStorage.instance.ref().child('club/${data.documentID}/${name}$i').putFile(_images[i]);
+                                      im.add(await (await uploadTask.onComplete).ref.getDownloadURL());
+                                    }
+                                    int level = 0;
+                                    switch(type){
+                                      case "공개":
+                                        level = 0;
+                                      break;
+                                      case "동아리":
+                                        level = 2;
+                                      break;
+                                      case "임원단":
+                                        level = 3;
+                                      break;
+                                    }
+                                    String name = Uuid().v4();
+                                    await Firestore.instance.collection('clubs').document(data.documentID).collection('Board').document(name).setData({
+                                      "body": {
+                                        "content": _new.text,
+                                        "image": im,
+                                      },
+                                      "head":{
+                                        "date": DateTime.now(),
+                                        "photoUrl": cu.currentUser.getphotoUrl(),
+                                        "writer": cu.currentUser.getDisplayName(),
+                                        "uid":cu.currentUser.getUid(),
+                                        "type": level,
+                                      },
+                                      "id": name,
+                                    });
+                                    setState(() {
+                                      type="공개";
+                                      _new.clear();
+                                      _images.clear();
+                                      open = ValueKey(false);
+                                    });
+                                  }
+                                },
+                            ),
+                          ],
                         )
-                      )
+                      ),
                     ],
                   )
                 )
                 :SizedBox(),
                 StreamBuilder<QuerySnapshot>(
-                  stream: Firestore.instance.collection('clubs').document(data.data['id']).collection('Board').where('head.type',isLessThanOrEqualTo: level).snapshots(),
+                  stream: Firestore.instance.collection('clubs').document(data.data['id']).collection('Board').orderBy("id").snapshots(),
                   builder: (context, snapshot) {
                     if (!snapshot.hasData) return LinearProgressIndicator();
                     return Column(

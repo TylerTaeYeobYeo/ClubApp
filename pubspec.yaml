@@ -20,7 +20,8 @@ dependencies:
   charts_flutter:
   url_launcher:
   image_picker:
-  
+  photo_view:
+
 dev_dependencies:
   flutter_test:
     sdk: flutter
@@ -34,6 +35,8 @@ flutter:
     - assets/logo/logo2.png
     - assets/logo/logo3.png
     - assets/logo/logo4.png
+    - assets/logo/image1.png
+    - assets/logo/image2.png
     - assets/logo/google.png
     - assets/logo/facebook.png
     - assets/logo/github.png

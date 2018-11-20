@@ -38,6 +38,7 @@ class _ClubPageState extends State<ClubPage> {
   @override
   void dispose() { 
     _request.dispose();
+    _new.dispose();
     cu.currentUser.club.exit();
     super.dispose();
   }
@@ -321,11 +322,13 @@ class _ClubPageState extends State<ClubPage> {
 
   Widget _buildListItem(BuildContext context, DocumentSnapshot data) {
     int type = data.data['head']['type'];
-    String typed = "공개";
+    String typed;
     switch(type){
-      case 1: typed="동아리";
+      case 2: typed="동아리";
       break;
-      case 2: typed="임원단";
+      case 3: typed="임원단";
+      break;
+      default: typed = "공개";
       break;
     }
     return Card(
@@ -572,7 +575,7 @@ class _ClubPageState extends State<ClubPage> {
                 )
                 :SizedBox(),
                 StreamBuilder<QuerySnapshot>(
-                  stream: Firestore.instance.collection('clubs').document(data.data['id']).collection('Board').orderBy("id").snapshots(),
+                  stream: Firestore.instance.collection('clubs').document(data.data['id']).collection('Board').where("head.date", isLessThanOrEqualTo: DateTime.now()).where("head.type", isLessThanOrEqualTo: level).orderBy("head.date",descending: true).orderBy("head.type").snapshots(),
                   builder: (context, snapshot) {
                     if (!snapshot.hasData) return LinearProgressIndicator();
                     return Column(

@@ -6,6 +6,7 @@ import 'package:project_club2/club/contact.dart';
 import 'package:project_club2/club/setting.dart';
 import 'package:project_club2/global/currentUser.dart' as cu;
 import 'package:project_club2/club/image.dart';
+import 'package:project_club2/club/imageN.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:uuid/uuid.dart';
 
@@ -26,14 +27,23 @@ class _ClubPageState extends State<ClubPage> {
   TextEditingController _new = new TextEditingController();
   File _image;
   List<File> _images = List();
-  List<String> _types = ["공개","동아리","임원"].toList();
+  List<String> _types = ["공개","동아리"].toList();
   String type = "공개";
+  int load = 20;
+  Stream<QuerySnapshot> term;
+
+  String text = "새로운 글쓰기";
+
   _ClubPageState({Key key, @required this.data})
     : assert(data != null);
   @override
   void initState() {
     super.initState();
     level = cu.currentUser.club.getLevel();
+    setState(() {
+      if(level > 1) term = Firestore.instance.collection('clubs').document(data.documentID).collection('Board').orderBy("head.date", descending: true).limit(load).snapshots();
+      else term = Firestore.instance.collection('clubs').document(data.documentID).collection('Board').where("head.type", isLessThanOrEqualTo: level).snapshots();
+    });
   }
   @override
   void dispose() { 
@@ -60,21 +70,30 @@ class _ClubPageState extends State<ClubPage> {
         case 1:
           return Container(
             height: 300.0,
-            width: MediaQuery.of(context).size.width,
-            padding: EdgeInsets.symmetric(vertical: 5.0),
-            child: Hero(
-                tag: data.data['body']['image'][0],
-                child: Image(
-                  image: NetworkImage(data.data['body']['image'][0]),
-                  fit: BoxFit.fitWidth,
+            padding: EdgeInsets.symmetric(vertical: 4.0),
+            child: FlatButton(
+                  child: SizedBox(
+                    height: 300.0,
+                    width: MediaQuery.of(context).size.width -8,
+                    child: Hero(
+                      tag: data.data['body']['image'][0],
+                      child: Image(
+                        image: NetworkImage(data.data['body']['image'][0]),
+                        fit: BoxFit.cover,
+                      ),
+                    ),
+                  ),
+                  padding: EdgeInsets.all(0.0),
+                  onPressed: ()=>Navigator.push(context, MaterialPageRoute(
+                    builder: (context) => NetworkImagePage(images: data.data['body']['image'],index: 0,),
+                  )),
                 ),
-              ),
           );
           break;
         case 2: 
         return 
         Container(
-            margin: EdgeInsets.symmetric(vertical: 5.0),
+            margin: EdgeInsets.symmetric(vertical: 4.0),
             child: Row(
               children: <Widget>[
                 FlatButton(
@@ -90,9 +109,9 @@ class _ClubPageState extends State<ClubPage> {
                     ),
                   ),
                   padding: EdgeInsets.all(0.0),
-                  onPressed: (){
-                    // print("page1");
-                  },
+                  onPressed: ()=>Navigator.push(context, MaterialPageRoute(
+                    builder: (context) => NetworkImagePage(images: data.data['body']['image'],index: 0,),
+                  )),
                 ),
                 FlatButton(
                   child: SizedBox(
@@ -107,7 +126,9 @@ class _ClubPageState extends State<ClubPage> {
                     ),
                   ),
                   padding: EdgeInsets.all(0.0),
-                  onPressed: (){},
+                  onPressed: ()=>Navigator.push(context, MaterialPageRoute(
+                    builder: (context) => NetworkImagePage(images: data.data['body']['image'], index: 1,),
+                  )),
                 ),
               ],
             ),
@@ -115,7 +136,7 @@ class _ClubPageState extends State<ClubPage> {
           break;
         default:
           return Container(
-            margin: EdgeInsets.symmetric(vertical: 5.0),
+            margin: EdgeInsets.symmetric(vertical: 4.0),
             child: Row(
               children: <Widget>[
                 FlatButton(
@@ -131,9 +152,9 @@ class _ClubPageState extends State<ClubPage> {
                     ),
                   ),
                   padding: EdgeInsets.all(0.0),
-                  onPressed: (){
-                    // print("page1");
-                  },
+                  onPressed: ()=>Navigator.push(context, MaterialPageRoute(
+                    builder: (context) => NetworkImagePage(images: data.data['body']['image'], index: 0),
+                  )),
                 ),
                 Column(
                   children: <Widget>[
@@ -150,7 +171,9 @@ class _ClubPageState extends State<ClubPage> {
                         ),
                       ),
                       padding: EdgeInsets.all(0.0),
-                      onPressed: (){},
+                      onPressed: ()=>Navigator.push(context, MaterialPageRoute(
+                        builder: (context) => NetworkImagePage(images: data.data['body']['image'], index: 1,),
+                      )),
                     ),
                     FlatButton(
                       child: Stack(
@@ -184,9 +207,9 @@ class _ClubPageState extends State<ClubPage> {
                         ],
                       ),
                       padding: EdgeInsets.all(0.0),
-                      onPressed: (){
-                        print(3);
-                      },
+                      onPressed: ()=>Navigator.push(context, MaterialPageRoute(
+                        builder: (context) => NetworkImagePage(images: data.data['body']['image'], index: 2,),
+                      )),
                     ),
                   ],
                 ),
@@ -400,7 +423,8 @@ class _ClubPageState extends State<ClubPage> {
             },
             body: ListView(
               children: <Widget>[
-                Card(
+                cu.currentUser.club.getLevel()<2
+                ?Card(
                   child: Column(
                     children: <Widget>[
                       ExpansionTile(
@@ -425,22 +449,29 @@ class _ClubPageState extends State<ClubPage> {
                       ),
                     ],
                   ),
-                ),
-                cu.currentUser.club.getLevel()>1
-                ?Card(
+                ):Card(
                   // color: Theme.of(context).primaryColorLight,
                   child: ExpansionTile(
-                    key: open,
+                    onExpansionChanged: (bool v){
+                      if(v){
+                        setState(() {
+                          text = DateTime.now().toLocal().toString();
+                        });
+                      }
+                      else                      
+                        setState(() {
+                          text = "새로운 글쓰기";
+                        });
+                    },                    
                     leading: CircleAvatar(
                         backgroundImage: NetworkImage(cu.currentUser.getphotoUrl()),
                       ),
                     title: ListTile(
                       title: Text(cu.currentUser.getDisplayName()),
-                      subtitle: Text(DateTime.now().toLocal().toString()),
+                      subtitle: Text(text),
                     ),
-                    trailing: Text("글쓰기"),
                     children: <Widget>[
-                      ListTile(
+                      _images.length>0?ListTile(
                         title: Container(
                           decoration: BoxDecoration(
                             image: DecorationImage(
@@ -472,12 +503,7 @@ class _ClubPageState extends State<ClubPage> {
                             },
                           ),
                         ),
-                        trailing: IconButton(
-                          icon: Icon(Icons.camera_alt),
-                          color: Theme.of(context).primaryColor,
-                          onPressed: ()=>getImage(),
-                        ),
-                      ),
+                      ):SizedBox(),
                       Divider(color: Colors.grey,),
                       ListTile(
                         title: Container(
@@ -486,7 +512,7 @@ class _ClubPageState extends State<ClubPage> {
                             children: <Widget>[
                               TextField(
                                 controller: _new,
-                                maxLines: 5,
+                                maxLines: 7,
                                 keyboardType: TextInputType.multiline,
                                 decoration: InputDecoration(
                                   hintText: "오늘의 동아리는 어떤가요?",
@@ -496,6 +522,7 @@ class _ClubPageState extends State<ClubPage> {
                           ),
                         ),
                         trailing: Column(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: <Widget>[
                             DropdownButton(
                               value: type,
@@ -505,6 +532,11 @@ class _ClubPageState extends State<ClubPage> {
                                   type = value;
                                 });
                               },
+                            ),
+                            IconButton(
+                              icon: Icon(Icons.camera_alt),
+                              color: Theme.of(context).primaryColor,
+                              onPressed: ()=>getImage(),
                             ),
                             IconButton(
                               icon: Icon(Icons.send),
@@ -572,16 +604,26 @@ class _ClubPageState extends State<ClubPage> {
                       ),
                     ],
                   )
-                )
-                :SizedBox(),
+                ),
                 StreamBuilder<QuerySnapshot>(
-                  stream: Firestore.instance.collection('clubs').document(data.data['id']).collection('Board').where("head.date", isLessThanOrEqualTo: DateTime.now()).where("head.type", isLessThanOrEqualTo: level).orderBy("head.date",descending: true).orderBy("head.type").snapshots(),
+                  stream: term,
                   builder: (context, snapshot) {
                     if (!snapshot.hasData) return LinearProgressIndicator();
                     return Column(
                       children: snapshot.data.documents.map((data) => _buildListItem(context, data)).toList(),
                     );
                   },
+                ),
+                Card(
+                  child: IconButton(
+                    icon: Icon(Icons.refresh),
+                    onPressed: (){
+                      setState(() {
+                        term = term;
+                        load +=10;
+                      });
+                    },
+                  ),
                 )
               ] 
             ),

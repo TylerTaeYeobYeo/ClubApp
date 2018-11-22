@@ -8,7 +8,7 @@ import 'package:project_club2/global/currentUser.dart' as cu;
 import 'package:project_club2/home.dart';
 import 'package:project_club2/new.dart';
 import 'package:project_club2/personal.dart';
-import 'package:project_club2/setting.dart';
+import 'package:project_club2/settings.dart';
 
 void main() => runApp(RouteApp());
 

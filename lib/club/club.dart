@@ -421,35 +421,37 @@ class _ClubPageState extends State<ClubPage> {
                 ),
               ];
             },
-            body: ListView(
+            body: cu.currentUser.club.getLevel()<2?ListView(
               children: <Widget>[
-                cu.currentUser.club.getLevel()<2
-                ?Card(
-                  child: Column(
+                Card(
+                  child: ExpansionTile(
+                    title: Text("동아리소개"),
                     children: <Widget>[
-                      ExpansionTile(
-                        title: Text("동아리소개"),
-                        children: <Widget>[
-                          Container(
-                            padding: EdgeInsets.all(20.0),
-                            child: Text(data.data['description']),
-                          ),
-                        ],
-                      ),
-                      ExpansionTile(
-                        initiallyExpanded: data.data['adv'],
-                        title: Text("가입하기"),
-                        children: <Widget>[
-                          Container(
-                            padding: EdgeInsets.all(20.0),
-                            child: Text(data.data['advertisement']),
-                          ),
-                          _requestButton()
-                        ],
+                      Container(
+                        padding: EdgeInsets.all(20.0),
+                        child: Text(data.data['description']),
                       ),
                     ],
                   ),
-                ):Card(
+                ),
+                Card(
+                  child: ExpansionTile(
+                    initiallyExpanded: data.data['adv'],
+                    title: Text("가입하기"),
+                    children: <Widget>[
+                      Container(
+                        padding: EdgeInsets.all(20.0),
+                        child: Text(data.data['advertisement']),
+                      ),
+                      _requestButton()
+                    ],
+                  ),
+                )
+              ] 
+            )
+            :ListView(
+              children: <Widget>[
+                Card(
                   // color: Theme.of(context).primaryColorLight,
                   child: ExpansionTile(
                     onExpansionChanged: (bool v){
@@ -614,7 +616,7 @@ class _ClubPageState extends State<ClubPage> {
                     );
                   },
                 ),
-                cu.currentUser.club.getLevel()>2?Card(
+                Card(
                   child: IconButton(
                     icon: Icon(Icons.refresh),
                     onPressed: (){
@@ -624,8 +626,8 @@ class _ClubPageState extends State<ClubPage> {
                       });
                     },
                   ),
-                ):SizedBox(),
-              ] 
+                ),
+              ],
             ),
           ),
         ],

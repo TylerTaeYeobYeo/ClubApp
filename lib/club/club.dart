@@ -15,7 +15,7 @@ class ClubPage extends StatefulWidget {
   ClubPage({Key key, @required this.data})
     : assert(data != null),
     super(key: key);
-  _ClubPageState createState() => _ClubPageState(data: data);
+  _ClubPageState createState() => _ClubPageState(club: data);
 }
 
 class _ClubPageState extends State<ClubPage> {
@@ -23,22 +23,24 @@ class _ClubPageState extends State<ClubPage> {
   Key open = ValueKey(false);
   int level;
   TextEditingController _request = new TextEditingController();
-  DocumentSnapshot data;
+  DocumentSnapshot club;
   TextEditingController _new = new TextEditingController();
   File _image;
   List<File> _images = List();
   List<String> _types = ["공개","동아리"].toList();
   String type = "공개";
   int load = 20;
-
   String text = "새로운 글쓰기";
-
-  _ClubPageState({Key key, @required this.data})
-    : assert(data != null);
+  List<String> like = List();
+  _ClubPageState({Key key, @required this.club})
+    : assert(club != null);
   @override
   void initState() {
     super.initState();
     level = cu.currentUser.club.getLevel();
+    cu.currentUser.club.getLike().forEach((item){
+      like.add(item.toString());
+    });
   }
   @override
   void dispose() { 
@@ -218,7 +220,7 @@ class _ClubPageState extends State<ClubPage> {
   }
 
   Widget _requestButton(){
-    bool a = data.data['adv'];
+    bool a = club.data['adv'];
     if(a && cu.currentUser.club.getLevel() < 2)
       return ButtonBar(
         children: <Widget>[
@@ -240,10 +242,10 @@ class _ClubPageState extends State<ClubPage> {
         return AlertDialog(
           title: ListTile(
             leading: CircleAvatar(
-              backgroundImage: NetworkImage(data.data["image"]),
+              backgroundImage: NetworkImage(club.data["image"]),
             ),
-            title: Text(data.data['name']),
-            trailing: Text(data.data['type'],style: TextStyle(color: Colors.grey,fontSize: 12.0),),
+            title: Text(club.data['name']),
+            trailing: Text(club.data['type'],style: TextStyle(color: Colors.grey,fontSize: 12.0),),
           ),
           contentPadding: EdgeInsets.all(30.0),
           content: Container(
@@ -266,7 +268,7 @@ class _ClubPageState extends State<ClubPage> {
               color: Theme.of(context).primaryColor,
               onPressed: ()async {
                 Navigator.pop(context);
-                await Firestore.instance.collection('clubs').document(data.documentID).collection('request').document(cu.currentUser.getUid()).setData({
+                await Firestore.instance.collection('clubs').document(club.documentID).collection('request').document(cu.currentUser.getUid()).setData({
                     "uid": cu.currentUser.getUid(),
                     "name": cu.currentUser.getDisplayName(),
                     "email": cu.currentUser.getEmail(),
@@ -316,7 +318,7 @@ class _ClubPageState extends State<ClubPage> {
                 Navigator.pop(context);
                 Navigator.push(context, 
                   MaterialPageRoute(
-                    builder: (context) => ContactPage(data: data),
+                    builder: (context) => ContactPage(data: club),
                   )
                 );
               },
@@ -328,7 +330,7 @@ class _ClubPageState extends State<ClubPage> {
                 Navigator.pop(context);
                 Navigator.push(context, 
                   MaterialPageRoute(
-                    builder: (context) => ClubSettingPage(data: data),
+                    builder: (context) => ClubSettingPage(data: club),
                   )
                 );
               },
@@ -341,11 +343,11 @@ class _ClubPageState extends State<ClubPage> {
 
   Widget _buildListItem(BuildContext context, DocumentSnapshot data) {
     int type = data.data['head']['type'];
+    bool _liked = false;
+    if(like.contains(data.documentID)) _liked = true;
     String typed;
     switch(type){
       case 2: typed="동아리";
-      break;
-      case 3: typed="임원단";
       break;
       default: typed = "공개";
       break;
@@ -355,18 +357,65 @@ class _ClubPageState extends State<ClubPage> {
       child: Column(
         children: <Widget>[
           // Image.network(data.data['body']['image'][0]),
-          imageController(data),
           ListTile(   
             leading: CircleAvatar(
               backgroundImage: NetworkImage(data.data['head']['photoUrl']),
             ),
-            title: Text(data.data['head']['writer']),
+            title: Text(data.data['head']['writer'],
+              style: TextStyle(color: Theme.of(context).primaryColorDark, fontWeight: FontWeight.bold),),
             subtitle: Text(data.data['head']['date'].toString()),
             trailing: Text(typed),
           ),
+          imageController(data),
           Container(
             padding: EdgeInsets.all(20.0),
-            child: Text(data.data['body']['content']),
+            child: Text(data.data['body']['content'],
+              textAlign: TextAlign.start,
+              overflow: TextOverflow.ellipsis,
+              maxLines: 3,
+            ),
+          ),
+          ButtonBar(
+            alignment: MainAxisAlignment.spaceBetween,
+            children: <Widget>[
+              Row(
+                children: <Widget>[
+                  IconButton(
+                    icon: _liked?Icon(Icons.favorite, color: Colors.red,):Icon(Icons.favorite_border, color: Colors.red,),
+                    onPressed: (){
+                      int num = data.data['liked'];
+                      if(_liked) {
+                        like.remove(data.documentID);
+                        Firestore.instance.collection('clubs').document(club.documentID).collection('Board').document(data.documentID).updateData({
+                          "liked": num - 1,
+                        });
+                      }
+                      else{
+                        like.add(data.documentID);
+                        Firestore.instance.collection('clubs').document(club.documentID).collection('Board').document(data.documentID).updateData({
+                          "liked": num + 1,
+                        });
+                      }
+                      Firestore.instance.collection('users').document(cu.currentUser.getUid()).collection('clubs').document(club.documentID).updateData({
+                        "like":like
+                      });
+                      Firestore.instance.collection('clubs').document(club.documentID).collection('users').document(cu.currentUser.getUid()).updateData({
+                        "like":like
+                      });
+                      setState(() {
+                        _liked = !_liked;
+                        cu.currentUser.club.setLike(like);
+                      });
+                    },
+                  ),
+                  Text(data.data['liked'].toString()),
+                ],
+              ),
+              FlatButton(
+                child: Text("더보기", style: TextStyle(color: Theme.of(context).primaryColorDark),),
+                onPressed: (){},
+              ),
+            ],
           ),
         ],
       ),
@@ -400,16 +449,16 @@ class _ClubPageState extends State<ClubPage> {
                   // snap: true,
                   flexibleSpace: FlexibleSpaceBar(
                     centerTitle: true,
-                    title: Text(data.data['name'],
+                    title: Text(club.data['name'],
                       style: TextStyle(
                         fontSize: 18.0,
                       )
                     ),
                     background: Hero(
-                      tag: data.data['id'],
+                      tag: club.data['id'],
                       child:Container(
                           decoration: new BoxDecoration(
-                          image: new DecorationImage(image: new NetworkImage(data.data['image']), fit:BoxFit.cover,),
+                          image: new DecorationImage(image: new NetworkImage(club.data['image']), fit:BoxFit.cover,),
                         ),
                       ),
                     ),
@@ -426,26 +475,26 @@ class _ClubPageState extends State<ClubPage> {
                     children: <Widget>[
                       Container(
                         padding: EdgeInsets.all(20.0),
-                        child: Text(data.data['description']),
+                        child: Text(club.data['description']),
                       ),
                     ],
                   ),
                 ),
                 Card(
                   child: ExpansionTile(
-                    initiallyExpanded: data.data['adv'],
+                    initiallyExpanded: club.data['adv'],
                     title: Text("가입하기"),
                     children: <Widget>[
                       Container(
                         padding: EdgeInsets.all(20.0),
-                        child: Text(data.data['advertisement']),
+                        child: Text(club.data['advertisement']),
                       ),
                       _requestButton()
                     ],
                   ),
                 ),
                 StreamBuilder<QuerySnapshot>(
-                  stream: Firestore.instance.collection('clubs').document(data.documentID).collection('Board').where("head.type", isLessThanOrEqualTo: level).limit(load).snapshots(),
+                  stream: Firestore.instance.collection('clubs').document(club.documentID).collection('Board').where("head.type", isLessThanOrEqualTo: level).limit(load).snapshots(),
                   builder: (context, snapshot) {
                     if (!snapshot.hasData) return LinearProgressIndicator();
                     return Column(
@@ -581,7 +630,7 @@ class _ClubPageState extends State<ClubPage> {
                                     List<String> im = List();
                                     for(int i =0;i<_images.length;i++){
                                       String name = Uuid().v4();
-                                      StorageUploadTask uploadTask = FirebaseStorage.instance.ref().child('club/${data.documentID}/${name}$i').putFile(_images[i]);
+                                      StorageUploadTask uploadTask = FirebaseStorage.instance.ref().child('club/${club.documentID}/$name$i').putFile(_images[i]);
                                       im.add(await (await uploadTask.onComplete).ref.getDownloadURL());
                                     }
                                     int level = 0;
@@ -597,7 +646,7 @@ class _ClubPageState extends State<ClubPage> {
                                       break;
                                     }
                                     String name = Uuid().v4();
-                                    await Firestore.instance.collection('clubs').document(data.documentID).collection('Board').document(name).setData({
+                                    await Firestore.instance.collection('clubs').document(club.documentID).collection('Board').document(name).setData({
                                       "body": {
                                         "content": _new.text,
                                         "image": im,
@@ -627,7 +676,7 @@ class _ClubPageState extends State<ClubPage> {
                   )
                 ),
                 StreamBuilder<QuerySnapshot>(
-                  stream: Firestore.instance.collection('clubs').document(data.documentID).collection('Board').orderBy("head.date", descending: true).limit(load).snapshots(),
+                  stream: Firestore.instance.collection('clubs').document(club.documentID).collection('Board').orderBy("head.date", descending: true).limit(load).snapshots(),
                   builder: (context, snapshot) {
                     if (!snapshot.hasData) return LinearProgressIndicator();
                     return Column(

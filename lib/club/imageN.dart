@@ -4,15 +4,18 @@ import 'package:photo_view/photo_view.dart';
 class NetworkImagePage extends StatelessWidget {
   final List<dynamic> images;
   final int index;
+  final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey();
   NetworkImagePage({@required this.images, @required this.index})
   :assert(images!=null), 
   assert(index!=null);
+
   @override
   Widget build(BuildContext context) {
     return DefaultTabController(
       length: images.length,
       initialIndex: index,
       child: Scaffold(
+        key: _scaffoldKey,
         body: NestedScrollView(
           headerSliverBuilder: (BuildContext context, bool innerBoxIsScrolled){
             return <Widget>[
@@ -22,23 +25,21 @@ class NetworkImagePage extends StatelessWidget {
                 centerTitle: true,
                 floating: true,
                 snap: true,
-                actions: <Widget>[
-                  IconButton(
-                    icon: Icon(Icons.file_download),
-                    onPressed: (){
-                    },
-                  )
-                ],
               ),
             ];
           },
           body: TabBarView(
             children: images.map((item){
-              return 
-                PhotoViewInline(
+              return FlatButton(
+                padding: EdgeInsets.all(0.0),
+                child: PhotoViewInline(
                   imageProvider: NetworkImage(item.toString()),
                   heroTag: item.toString(),
-                );
+                ),
+                onPressed: (){
+                  
+                },
+              );
             }).toList(),
           ),
         )
@@ -46,3 +47,4 @@ class NetworkImagePage extends StatelessWidget {
     );
   }
 }
+

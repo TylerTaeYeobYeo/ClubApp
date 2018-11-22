@@ -5,6 +5,7 @@ import 'package:firebase_storage/firebase_storage.dart';
 import 'package:project_club2/club/request.dart';
 import 'package:project_club2/club/members.dart';
 import 'package:project_club2/club/leaders.dart';
+import 'package:project_club2/club/fix.dart';
 
 class ClubSettingPage extends StatefulWidget {
   final DocumentSnapshot data;
@@ -42,6 +43,11 @@ class _ClubSettingPageState extends State<ClubSettingPage> {
                       ListTile(
                         leading: Icon(Icons.settings, color: Theme.of(context).primaryColorLight),
                         title: Text("정보 수정"),
+                        onTap: (){
+                          Navigator.push(context, MaterialPageRoute(
+                            builder: (context) => FixPage(data: data),
+                          ));
+                        },
                       ),
                     ],
                   ),
@@ -53,7 +59,10 @@ class _ClubSettingPageState extends State<ClubSettingPage> {
                     children: <Widget>[
                       SwitchListTile(
                         secondary: Icon(Icons.people, color: Theme.of(context).primaryColorLight,),
-                        title: Text("활성화 시 동아리 가입신청을 받을 수 있습니다."),
+                        title: Container(
+                          padding: EdgeInsets.symmetric(vertical: 10.0),
+                          child: Text("활성화 시 동아리 가입신청을 받을 수 있습니다."),
+                        ),
                         value: data.data['adv'],
                         onChanged: (bool value) {
                           setState(() {

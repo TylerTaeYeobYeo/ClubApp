@@ -5,30 +5,40 @@ import 'package:image_picker/image_picker.dart';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_storage/firebase_storage.dart';
-import 'package:uuid/uuid.dart';
-import 'package:project_club2/global/currentUser.dart'as cu;
 
-class NewClubPage extends StatefulWidget {
-  _NewClubPageState createState() => _NewClubPageState();
+class FixPage extends StatefulWidget {
+  final DocumentSnapshot data;
+  FixPage({Key key, @required this.data})
+    : assert(data != null),
+    super(key: key);
+  _FixPageState createState() => _FixPageState(club: data);
 }
 
-class _NewClubPageState extends State<NewClubPage> {
-  TextEditingController _name = TextEditingController();
+class _FixPageState extends State<FixPage> {
   TextEditingController _advertisement = TextEditingController();
   TextEditingController _description = TextEditingController();
   TextEditingController _type = TextEditingController();
   bool adv = true;
   File _image;
+  final DocumentSnapshot club;
+  _FixPageState({Key key, @required this.club})
+    : assert(club != null);
 
   @override
   void dispose() { 
-    _name.dispose();
     _advertisement.dispose();
     _description.dispose();
     _type.dispose(); 
     super.dispose();
   }
 
+  void initState() { 
+    super.initState();
+    _advertisement.text = club.data['advertisement'];
+    _description.text = club.data['description'];
+    adv = club.data['adv'];
+    _type.text = club.data['type'];
+  }
   Future getImage() async {
     var image = await ImagePicker.pickImage(source: ImageSource.gallery);
     if (image == null) return;
@@ -53,11 +63,11 @@ class _NewClubPageState extends State<NewClubPage> {
           ),
         ),
         appBar: AppBar(
-          title: Text("새로운 동아리"),
+          title: Text("동아리 정보 수정"),
           centerTitle: true,
           actions: <Widget>[
             FlatButton(
-              child: Text("Create"),
+              child: Text("Edit"),
               onPressed: (){
                 showDialog(
                   context: context,
@@ -65,36 +75,19 @@ class _NewClubPageState extends State<NewClubPage> {
                     return AlertDialog(
                       title: ListTile(
                         leading: CircleAvatar(
-                          backgroundImage: _image!=null?FileImage(_image):NetworkImage("http://image.sportsseoul.com/2018/01/02/news/2018010201000018800000491.jpg"),
+                          backgroundImage: _image!=null?FileImage(_image):NetworkImage(club.data['image']),
                         ),
-                        title: Text(_name.text),
+                        title: Text(club.data['name']),
                       ),
                       content: Container(
                         height: MediaQuery.of(context).size.height*5/6,
                         width: MediaQuery.of(context).size.width*5/6,
                         child: ListView(
                           children: <Widget>[
-                            
-                            ExpansionTile(
-                              title: Text("동아리이름"),
-                              children: <Widget>[
-                                Container(
-                                  padding: EdgeInsets.all(20.0),
-                                  child: TextField(
-                                    controller: _name,
-                                    maxLength: 15,
-                                    decoration: InputDecoration(
-                                      hintText: "ex) 슬기짜기",
-                                      helperText: "15자 이내로 입력해주세요"
-                                    ),
-                                  ),
-                                )
-                              ],
-                            ),
                             ExpansionTile(
                               title: Text("배경이미지"),
                               children: <Widget>[
-                                _image!=null?Image.file(_image):Image.network("http://image.sportsseoul.com/2018/01/02/news/2018010201000018800000491.jpg"),
+                                _image!=null?Image.file(_image):Image.network(club.data['image']),
                               ],
                             ),
                             ExpansionTile(
@@ -144,7 +137,7 @@ class _NewClubPageState extends State<NewClubPage> {
                               children: <Widget>[
                                 Container(
                                   padding: EdgeInsets.all(20.0),
-                                  child: Text("이 기능을 키면 동아리를 생성하는 즉시 리쿠르팅이 시작합니다."),
+                                  child: Text("이 기능을 키면 동아리를 리쿠르팅 기능이 활성화됩니다."),
                                 )
                               ],
                             ),
@@ -157,7 +150,8 @@ class _NewClubPageState extends State<NewClubPage> {
                                     maxLines: 1,
                                     controller: _type,
                                     decoration: InputDecoration(
-                                      hintText: "ex) 음악/밴드",
+                                      hintText: "ex) 한동대학교",
+                                      helperText: "소속 대학교를 입력해주세요"
                                     ),
                                   ),
                                 )
@@ -174,74 +168,27 @@ class _NewClubPageState extends State<NewClubPage> {
                           },
                         ),
                         RaisedButton(
-                          child: Text("생성", style: TextStyle(color: Colors.black),),
+                          child: Text("수정", style: TextStyle(color: Colors.black),),
                           color: Theme.of(context).primaryColor,
                           onPressed: ()async{
-                            //check
-                            if(_name.text ==""){
-                              showDialog(
-                                context: context,
-                                builder: (context){
-                                  return SimpleDialog(
-                                    title: ListTile(
-                                      leading: CircleAvatar(
-                                        backgroundImage: _image!=null?FileImage(_image):NetworkImage("http://image.sportsseoul.com/2018/01/02/news/2018010201000018800000491.jpg"),
-                                      ),
-                                      title: Text("동아리 이름을 입력해주세요"),
-                                    ),
-                                    children: <Widget>[
-                                      ButtonBar(
-                                        children: <Widget>[
-                                          FlatButton(
-                                            child: Text("확인", style: TextStyle(color: Theme.of(context).primaryColor),),
-                                            onPressed: ()=>Navigator.pop(context),
-                                          )
-                                        ],
-                                      )
-                                    ],
-                                  );
-                                }
-                              );
-                              return;
+                            Navigator.pop(context);
+                            Navigator.pop(context);
+                            Navigator.pop(context);
+                            String image;
+                            if(_image != null){
+                              StorageUploadTask uploadTask = FirebaseStorage.instance.ref().child('clubs/background/${club.documentID}').putFile(_image);
+                              image = await (await uploadTask.onComplete).ref.getDownloadURL();
                             }
-                            else{
-                            //do
-                              Navigator.popUntil(context, ModalRoute.withName('/home'));
-                              String id = Uuid().v1();
-                              String image;
-                              if(_image != null){
-                                StorageUploadTask uploadTask = FirebaseStorage.instance.ref().child('clubs/background/$id').putFile(_image);
-                                image = await (await uploadTask.onComplete).ref.getDownloadURL();
-                              }
-                              else image = "http://image.sportsseoul.com/2018/01/02/news/2018010201000018800000491.jpg";
-                              Firestore.instance.runTransaction((Transaction transaction){
-                                Firestore.instance.collection('clubs').document(id).setData({
-                                  "id": id,
-                                  "name": _name.text,
-                                  "description": _description.text,
-                                  "image": image,
-                                  "advertisement": _advertisement.text,
-                                  "adv": adv,
-                                  "type": _type.text,
-                                  "created": DateTime.now(),
-                                });
-                                Firestore.instance.collection('clubs').document(id).collection('users').document(cu.currentUser.getUid()).setData({
-                                  "id": cu.currentUser.getUid(),
-                                  "email": cu.currentUser.getEmail(),
-                                  "level": 3,
-                                  "name": cu.currentUser.getDisplayName(),
-                                  "phoneNumber":cu.currentUser.getPhoneNumber(),
-                                  "photoUrl":cu.currentUser.getphotoUrl(),
-                                });
-                                Firestore.instance.collection('users').document(cu.currentUser.getUid()).collection('clubs').document(id).setData({
-                                  "id": id,
-                                  "image": image,
-                                  "level":3,
-                                  "name": _name.text,
-                                  "type": _type.text
-                                });
+                            else image = club.data['image'];
+                            Firestore.instance.runTransaction((Transaction transaction){
+                              Firestore.instance.collection('clubs').document(club.documentID).updateData({
+                                "description": _description.text,
+                                "image": image,
+                                "advertisement": _advertisement.text,
+                                "adv": adv,
+                                "type": _type.text,
                               });
-                            }
+                            });
                           },
                         ),
                       ],
@@ -267,23 +214,11 @@ class _NewClubPageState extends State<NewClubPage> {
                           ListTile(
                             leading: Text("배경 이미지"),
                             title: Image(
-                              image: _image!=null?FileImage(_image):NetworkImage("http://image.sportsseoul.com/2018/01/02/news/2018010201000018800000491.jpg"),
+                              image: _image!=null?FileImage(_image):NetworkImage(club.data['image']),
                             ),
                             trailing: IconButton(
                               icon: Icon(Icons.camera_alt),
                               onPressed: ()=>getImage(),
-                            ),
-                          ),
-                          ListTile(
-                            leading: Text("동아리 이름"),
-                            title: TextField(
-                              controller: _name,
-                              maxLines: 1,
-                              maxLength: 15,
-                              decoration: InputDecoration(
-                                hintText: "ex) 슬기짜기",
-                                helperText: "15자 이내로 입력해주세요"
-                              ),
                             ),
                           ),
                           ListTile(
@@ -311,7 +246,7 @@ class _NewClubPageState extends State<NewClubPage> {
                             ),
                           ),
                           SwitchListTile(
-                            title: Text("활성화시 동아리 생성후 가입신청을 바로 받을 수 있습니다.",style: TextStyle(fontSize: 14.0,color: Colors.grey[600]),),
+                            title: Text("활성화시 동아리 가입신청을 바로 받을 수 있습니다.",style: TextStyle(fontSize: 14.0,color: Colors.grey[600]),),
                             secondary: Text("리쿠르팅    "),
                             onChanged: (bool value) {
                               setState(() {
@@ -341,7 +276,7 @@ class _NewClubPageState extends State<NewClubPage> {
                   children: <Widget>[
                     Expanded(
                       child: Card(
-                        color: Colors.white70,
+                        color: Colors.transparent,
                         child: NestedScrollView(
                           headerSliverBuilder: (BuildContext context, bool innerBoxIsScrolled){
                             return <Widget>[
@@ -354,11 +289,11 @@ class _NewClubPageState extends State<NewClubPage> {
                                 ),
                                 flexibleSpace: FlexibleSpaceBar(
                                   centerTitle: true,
-                                  title: Text(_name.text),
+                                  title: Text(club.data['name']),
                                   background: Container(
                                     decoration: new BoxDecoration(
                                       image: new DecorationImage(
-                                        image: _image!=null?FileImage(_image):NetworkImage("http://image.sportsseoul.com/2018/01/02/news/2018010201000018800000491.jpg"), 
+                                        image: _image!=null?FileImage(_image):NetworkImage(club.data['image']), 
                                         fit:BoxFit.cover,
                                       ),
                                     ),

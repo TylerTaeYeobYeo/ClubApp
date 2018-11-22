@@ -72,6 +72,7 @@ class CurrentClub{
   String _advertisement;
   String _image;
   String _description;
+  List<dynamic> _like = List();
   bool _adv;
   int _level;
   int _title;
@@ -84,6 +85,7 @@ class CurrentClub{
   String getDsc(){return _description;}
   bool getAdv(){return _adv;}
   int getLevel(){return _level;}
+  List<dynamic> getLike(){return _like;}
   int getTitle(){return _title;}
 
   Future<DocumentSnapshot> enterLikedClub(String id)async{
@@ -112,6 +114,7 @@ class CurrentClub{
     DocumentSnapshot doc = await Firestore.instance.collection('clubs').document(_id).collection('users').document(currentUser.getUid()).get();
     if(doc.exists) {
       _level = doc.data['level'];
+      _like = doc.data['like'];
       Firestore.instance.runTransaction((Transaction transaction)async{
         Firestore.instance.collection('users').document(currentUser.getUid()).collection('clubs').document(_id).updateData({
         "name": _name,
@@ -129,6 +132,15 @@ class CurrentClub{
     }
     else _level = 0;
   }
+  likeAdd(dynamic input){
+    _like.add(input.toString());
+  }
+  likeRemove(dynamic input){
+    _like.remove(input);
+  }
+  setLike(List<dynamic> list){
+    _like = list;
+  }
   exit(){
     _id = null;
     _name = null;
@@ -138,6 +150,7 @@ class CurrentClub{
     _description = null;
     _adv = false;
     _level = 0;
+    _like.clear();
   }
 }
 

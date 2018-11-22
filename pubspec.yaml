@@ -15,7 +15,8 @@ dependencies:
   google_sign_in:
   firebase_auth:
   firebase_storage:
-  
+  path_provider:
+
   uuid:
   charts_flutter:
   url_launcher:

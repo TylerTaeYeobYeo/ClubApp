@@ -5,7 +5,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:project_club2/club/contact.dart';
 import 'package:project_club2/club/setting.dart';
 import 'package:project_club2/global/currentUser.dart' as cu;
-import 'package:project_club2/club/image.dart';
+import 'package:project_club2/club/imageF.dart';
 import 'package:project_club2/club/imageN.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:uuid/uuid.dart';
@@ -30,7 +30,6 @@ class _ClubPageState extends State<ClubPage> {
   List<String> _types = ["공개","동아리"].toList();
   String type = "공개";
   int load = 20;
-  Stream<QuerySnapshot> term;
 
   String text = "새로운 글쓰기";
 
@@ -40,13 +39,10 @@ class _ClubPageState extends State<ClubPage> {
   void initState() {
     super.initState();
     level = cu.currentUser.club.getLevel();
-    setState(() {
-      if(level > 1) term = Firestore.instance.collection('clubs').document(data.documentID).collection('Board').orderBy("head.date", descending: true).limit(load).snapshots();
-      else term = Firestore.instance.collection('clubs').document(data.documentID).collection('Board').where("head.type", isLessThanOrEqualTo: level).snapshots();
-    });
   }
   @override
   void dispose() { 
+    _images.clear();
     _request.dispose();
     _new.dispose();
     cu.currentUser.club.exit();
@@ -421,7 +417,8 @@ class _ClubPageState extends State<ClubPage> {
                 ),
               ];
             },
-            body: cu.currentUser.club.getLevel()<2?ListView(
+            body: cu.currentUser.club.getLevel()<2
+            ?ListView(
               children: <Widget>[
                 Card(
                   child: ExpansionTile(
@@ -446,7 +443,26 @@ class _ClubPageState extends State<ClubPage> {
                       _requestButton()
                     ],
                   ),
-                )
+                ),
+                StreamBuilder<QuerySnapshot>(
+                  stream: Firestore.instance.collection('clubs').document(data.documentID).collection('Board').where("head.type", isLessThanOrEqualTo: level).limit(load).snapshots(),
+                  builder: (context, snapshot) {
+                    if (!snapshot.hasData) return LinearProgressIndicator();
+                    return Column(
+                      children: snapshot.data.documents.map((data) => _buildListItem(context, data)).toList(),
+                    );
+                  },
+                ),
+                Card(
+                  child: IconButton(
+                    icon: Icon(Icons.refresh),
+                    onPressed: (){
+                      setState(() {
+                        load +=10;
+                      });
+                    },
+                  ),
+                ),
               ] 
             )
             :ListView(
@@ -494,10 +510,13 @@ class _ClubPageState extends State<ClubPage> {
                                 padding: EdgeInsets.symmetric(horizontal: 4.0),
                                 child: FlatButton(
                                   padding: EdgeInsets.all(0.0),
-                                  child: Image.file(_images[index], fit: BoxFit.cover),
+                                  child: Hero(
+                                    tag: _images[index].toString(),
+                                    child: Image.file(_images[index], fit: BoxFit.cover),
+                                  ),
                                   onPressed: ()=>Navigator.push(context, 
                                     MaterialPageRoute(
-                                      builder: (context) => ImagePage(image: _images[index],),
+                                      builder: (context) => ImagePage(images: _images, index: index,),
                                     )
                                   ),
                                 ),
@@ -608,7 +627,7 @@ class _ClubPageState extends State<ClubPage> {
                   )
                 ),
                 StreamBuilder<QuerySnapshot>(
-                  stream: term,
+                  stream: Firestore.instance.collection('clubs').document(data.documentID).collection('Board').orderBy("head.date", descending: true).limit(load).snapshots(),
                   builder: (context, snapshot) {
                     if (!snapshot.hasData) return LinearProgressIndicator();
                     return Column(
@@ -621,7 +640,6 @@ class _ClubPageState extends State<ClubPage> {
                     icon: Icon(Icons.refresh),
                     onPressed: (){
                       setState(() {
-                        term = term;
                         load +=10;
                       });
                     },

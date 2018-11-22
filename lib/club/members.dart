@@ -60,6 +60,7 @@ class _MembersPageState extends State<MembersPage> {
               onPressed: ()async {
                 Navigator.pop(context);
                 Firestore.instance.collection('clubs').document(club.documentID).collection('users').document(data.data['id']).delete();
+                Firestore.instance.collection('users').document(data.data['id']).collection('clubs').document(club.documentID).delete();
               },
             ),
           ],

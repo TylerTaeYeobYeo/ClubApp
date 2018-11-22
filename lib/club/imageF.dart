@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:photo_view/photo_view.dart';
+import 'dart:io';
 
-class NetworkImagePage extends StatelessWidget {
-  final List<dynamic> images;
+class ImagePage extends StatelessWidget {
+  final List<File> images;
   final int index;
-  NetworkImagePage({@required this.images, @required this.index})
+  ImagePage({@required this.images, @required this.index})
   :assert(images!=null), 
   assert(index!=null);
   @override
@@ -18,27 +19,19 @@ class NetworkImagePage extends StatelessWidget {
             return <Widget>[
               SliverAppBar(
                 backgroundColor: Colors.white70,
-                title: Text("이미지"),
+                title: Text("업로드 이미지"),
                 centerTitle: true,
                 floating: true,
                 snap: true,
-                actions: <Widget>[
-                  IconButton(
-                    icon: Icon(Icons.file_download),
-                    onPressed: (){
-                    },
-                  )
-                ],
               ),
             ];
           },
           body: TabBarView(
             children: images.map((item){
-              return 
-                PhotoViewInline(
-                  imageProvider: NetworkImage(item.toString()),
-                  heroTag: item.toString(),
-                );
+              return PhotoViewInline(
+                imageProvider: FileImage(item),
+                heroTag: item.toString(),
+              );
             }).toList(),
           ),
         )

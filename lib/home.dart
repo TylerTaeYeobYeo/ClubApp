@@ -113,10 +113,10 @@ class _HomePageState extends State<HomePage> {
                 leading: Icon(Icons.people_outline),
                 title: Text("다른 아이디로 로그인"),
                 onTap: (){
+                  Navigator.pop(context);
+                  Navigator.pop(context);
                   FirebaseAuth.instance.signOut();
                   cu.currentUser.googleLogOut();
-                  Navigator.pop(context);
-                  Navigator.pop(context);
                 },
               ),
             ],

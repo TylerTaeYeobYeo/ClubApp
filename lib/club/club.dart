@@ -614,7 +614,7 @@ class _ClubPageState extends State<ClubPage> {
                     );
                   },
                 ),
-                Card(
+                cu.currentUser.club.getLevel()>2?Card(
                   child: IconButton(
                     icon: Icon(Icons.refresh),
                     onPressed: (){
@@ -624,7 +624,7 @@ class _ClubPageState extends State<ClubPage> {
                       });
                     },
                   ),
-                )
+                ):SizedBox(),
               ] 
             ),
           ),

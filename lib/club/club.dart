@@ -7,6 +7,8 @@ import 'package:project_club2/club/setting.dart';
 import 'package:project_club2/global/currentUser.dart' as cu;
 import 'package:project_club2/club/imageF.dart';
 import 'package:project_club2/club/imageN.dart';
+import 'package:project_club2/club/database.dart';
+import 'package:project_club2/club/detail.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:uuid/uuid.dart';
 
@@ -23,7 +25,6 @@ class _ClubPageState extends State<ClubPage> {
   Key open = ValueKey(false);
   int level;
   TextEditingController _request = new TextEditingController();
-  DocumentSnapshot club;
   TextEditingController _new = new TextEditingController();
   File _image;
   List<File> _images = List();
@@ -32,6 +33,7 @@ class _ClubPageState extends State<ClubPage> {
   int load = 20;
   String text = "새로운 글쓰기";
   List<String> like = List();
+  DocumentSnapshot club;
   _ClubPageState({Key key, @required this.club})
     : assert(club != null);
   @override
@@ -304,12 +306,8 @@ class _ClubPageState extends State<ClubPage> {
               onTap: (){Navigator.popUntil(context, ModalRoute.withName('/home'));},
             ),
             ListTile(
-              leading: Icon(Icons.school),
-              title: Text("수업자료"),
-            ),
-            ListTile(
               leading: Icon(Icons.folder),
-              title: Text("동아리자료"),
+              title: Text("공유자료"),
             ),
             ListTile(
               leading: Icon(Icons.call),
@@ -324,6 +322,18 @@ class _ClubPageState extends State<ClubPage> {
               },
             ),
             cu.currentUser.club.getLevel()==3?ListTile(
+              leading: Icon(Icons.folder_special),
+              title: Text("운영자료"),
+              onTap: (){
+                Navigator.pop(context);
+                Navigator.push(context, 
+                  MaterialPageRoute(
+                    builder: (context) => DatabasePage(data: club),
+                  )
+                );
+              },
+            ):SizedBox(),
+            cu.currentUser.club.getLevel()==3?ListTile(
               leading: Icon(Icons.settings),
               title: Text("임원단 메뉴"),
               onTap: (){
@@ -335,6 +345,7 @@ class _ClubPageState extends State<ClubPage> {
                 );
               },
             ):SizedBox(),
+            
           ],
         ),
       );
@@ -413,7 +424,11 @@ class _ClubPageState extends State<ClubPage> {
               ),
               FlatButton(
                 child: Text("더보기", style: TextStyle(color: Theme.of(context).primaryColorDark),),
-                onPressed: (){},
+                onPressed: (){
+                  Navigator.push(context, MaterialPageRoute(
+                    builder: (context)=>DetailClubPage(data: data),
+                  ));
+                },
               ),
             ],
           ),

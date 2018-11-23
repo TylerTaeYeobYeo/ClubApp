@@ -22,6 +22,7 @@ dependencies:
   url_launcher:
   image_picker:
   photo_view:
+  file_picker:
 
 dev_dependencies:
   flutter_test:

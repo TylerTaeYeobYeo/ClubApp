@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:intl/intl.dart';
+import 'dart:io';
+import 'package:image_picker/image_picker.dart';
+
 import 'package:project_club2/club/imageN.dart';
 import 'package:project_club2/global/currentUser.dart' as cu;
 
@@ -16,12 +19,17 @@ class DetailClubPage extends StatefulWidget {
 class _DetailClubPageState extends State<DetailClubPage> {
   TextEditingController _comment = TextEditingController();
   TextEditingController controller = TextEditingController(); //for comments fixing
+  TextEditingController _body = TextEditingController();
+  
   final DocumentSnapshot club;
   final DocumentSnapshot data;
+  List<dynamic> _images = List();
+  bool edit = false;
   _DetailClubPageState({Key key, @required this.club, @required this.data})
     : assert(data != null);
 
   String typed= "";
+  String fixed= "";
   @override
   void initState() {
     int type = data.data['head']['type'];
@@ -31,10 +39,16 @@ class _DetailClubPageState extends State<DetailClubPage> {
       default: typed = "공개";
       break;
     }
+    fixed = typed;
+    data.data['body']['image'].forEach((image){
+      _images.add(image);
+    });
+    _body.text = data.data['body']['content'];
     super.initState();
   }
   @override
   void dispose() { 
+    _body.dispose();
     _comment.dispose();
     controller.dispose();
     super.dispose();
@@ -51,19 +65,79 @@ class _DetailClubPageState extends State<DetailClubPage> {
               floating: true,
               snap: true,
               backgroundColor: Colors.white,
-              actions: <Widget>[
+              actions: edit?<Widget>[
+                IconButton(
+                  icon: Icon(Icons.cancel),
+                  onPressed: (){
+                    setState(() {
+                      edit=!edit;
+                    });
+                  },
+                ),
+                IconButton(
+                  icon: Icon(Icons.save),
+                  onPressed: (){
+                    int tp;
+                    switch(fixed){
+                      case "공개":
+                      tp = 0;
+                      break;
+                      default: tp=2;
+                      break;
+                    }
+                    setState(() {
+                      edit = !edit;
+                      data.data['body']['content'] = _body.text;
+                      data.data['head']['type'] = tp;
+                      data.data['body']['image'] = _images;
+                      typed = fixed;
+                    });
+                    Firestore.instance.collection('clubs').document(club.documentID).collection('Board').document(data.documentID).updateData({
+                      "body.content": _body.text,
+                      "head.type": tp,
+                      "body.image": _images,
+                    });
+                  },
+                )
+              ]:<Widget>[
                 cu.currentUser.getUid() == data.data['head']['uid']
                   ?IconButton(
                     icon: Icon(Icons.edit),
-                    onPressed: (){},
+                    onPressed: (){
+                      setState(() {
+                        edit = !edit;
+                      });
+                    },
                   )
                   :SizedBox(),
                 cu.currentUser.getUid() == data.data['head']['uid']
                   ?IconButton(
                     icon: Icon(Icons.delete),
                     onPressed: (){
-                      Navigator.pop(context);
-                      Firestore.instance.collection('clubs').document(club.documentID).collection('Board').document(data.documentID).delete();
+                      showDialog(
+                        context: context,
+                        builder: (context){
+                          return AlertDialog(
+                            title: Text("게시물을 삭제하시겠습니까?"),
+                            content: Text("삭제한 게시물은 복구되지 않습니다."),
+                            actions: <Widget>[
+                              FlatButton(
+                                child: Text("취소",style: TextStyle(color: Theme.of(context).primaryColor),),
+                                onPressed: ()=>Navigator.pop(context),
+                              ),
+                              RaisedButton(
+                                child: Text("삭제",style: TextStyle(color: Colors.white),),
+                                color: Theme.of(context).primaryColor,
+                                onPressed: (){
+                                  Navigator.pop(context);
+                                  Navigator.pop(context);
+                                  Firestore.instance.collection('clubs').document(club.documentID).collection('Board').document(data.documentID).delete();
+                                },
+                              )
+                            ],
+                          );
+                        }
+                      );
                     },
                   )
                   :SizedBox(),
@@ -71,7 +145,97 @@ class _DetailClubPageState extends State<DetailClubPage> {
             )
           ];
         },
-        body: ListView(
+        body: edit?ListView(
+          children: <Widget>[
+            ListTile(
+              leading: Container(
+                height: 40.0,
+                width: 40.0,
+                child: CircleAvatar(
+                  backgroundImage: NetworkImage(data.data['head']['photoUrl']),
+                ),
+              ),
+              title: Text(data.data['head']['writer'],
+                style: TextStyle(color: Theme.of(context).primaryColorDark, fontWeight: FontWeight.bold),),
+              subtitle: Text(DateFormat.yMd().add_jm().format(data.data['head']['date'])),
+              trailing: DropdownButton(
+                value: fixed,
+                items: <DropdownMenuItem>[
+                  DropdownMenuItem<String>(
+                    child: Text("공개"),
+                    value: "공개",
+                  ),
+                  DropdownMenuItem<String>(
+                    child: Text("동아리"),
+                    value: "동아리",
+                  )
+                ],
+                onChanged: (value) {
+                  setState(() {
+                    fixed = value;
+                  });
+                },
+              ),
+            ),
+            Column(
+              children: <Widget>[
+                data.data['body']['image'].length!=0
+                  ?Container(
+                    height: MediaQuery.of(context).size.height/2,
+                    child: ListView.builder(
+                      scrollDirection: Axis.horizontal,
+                      itemCount: _images.length,
+                      itemBuilder: (BuildContext context, int index) {
+                        return Card(
+                          child: Stack(
+                            children: <Widget>[
+                              Container(
+                                // width: MediaQuery.of(context).size.width-20,
+                                child: FlatButton(
+                                  padding: EdgeInsets.all(0.0),
+                                  child: Hero(
+                                    tag: data.data['body']['image'][index],
+                                    child: Image.network(_images[index], fit: BoxFit.fitHeight),
+                                  ),
+                                  onPressed: (){
+                                    setState(() {
+                                      _images.remove(data.data['body']['image'][index]);
+                                    });
+                                  },
+                                ),
+                              ),
+                              Container(
+                                padding: EdgeInsets.all(20.0),
+                                child: Icon(Icons.close, color: Theme.of(context).primaryColor, size: 40.0,)
+                              ),
+                            ],
+                          ),
+                        );
+                      },
+                    ),
+                  )
+                  :SizedBox(),
+                // IconButton(
+                //   icon: Icon(Icons.camera_alt),
+                //   onPressed: (){
+
+                //   },
+                // ),
+              ],
+            ),
+            ListTile(
+              title: TextField(
+                controller: _body,
+                maxLines: 5,
+                keyboardType: TextInputType.multiline,
+                decoration: InputDecoration(
+                  hintText: "ex) 행복한 동아리~",
+                  helperText: "본문을 입력해주세요"
+                ),
+              ),
+            )
+          ],
+        ):ListView(
           children: <Widget>[
             ListTile(
               leading: Container(
@@ -86,7 +250,8 @@ class _DetailClubPageState extends State<DetailClubPage> {
               subtitle: Text(DateFormat.yMd().add_jm().format(data.data['head']['date'])),
               trailing: Text(typed,style: TextStyle(fontSize: 14.0),),
             ),
-            data.data['body']['image'].length!=0?Container(
+            data.data['body']['image'].length!=0
+            ?Container(
               height: MediaQuery.of(context).size.height/2,
               child: ListView.builder(
                 scrollDirection: Axis.horizontal,
@@ -171,6 +336,9 @@ class _DetailClubPageState extends State<DetailClubPage> {
                         controller: _comment,
                         keyboardType: TextInputType.multiline,
                         maxLines: 2,
+                        decoration: InputDecoration(
+                          hintText: "댓글을 달아주세요",
+                        ),
                       ),
                     ),
                     trailing: IconButton(
@@ -298,45 +466,6 @@ class _DetailClubPageState extends State<DetailClubPage> {
                               );
                             }:null,
                           );
-                          // Container(
-                          //   padding: EdgeInsets.all(4.0),
-                          //   child: Row(children: <Widget>[
-                          //     Container(
-                          //       height: 30.0,
-                          //       width: 30.0,
-                          //       margin: EdgeInsets.all(8.0),
-                          //       child: CircleAvatar(
-                          //         backgroundImage: NetworkImage(doc.data['photoUrl'].toString()),
-                          //       ),
-                          //     ),
-                          //     Column(
-                          //       mainAxisAlignment: MainAxisAlignment.start,
-                          //       crossAxisAlignment: CrossAxisAlignment.end,
-                          //       children: <Widget>[
-                          //         Container(
-                          //           width: MediaQuery.of(context).size.width*2/3,
-                          //           padding: EdgeInsets.symmetric(horizontal: 4.0),
-                          //           child: RichText(
-                          //             text: TextSpan(
-                          //               children: [
-                          //                 TextSpan(text:doc.data['writer'] + "\n", style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold),),
-                          //                 TextSpan(text:doc.data['body'], style: TextStyle(color: Colors.black),)
-                          //               ]
-                          //             ),
-                          //           ),
-                          //         ),
-                          //         Text(DateFormat.yMd().add_jm().format(doc.data['date'].toLocal()), style: TextStyle(color: Colors.grey),)
-
-                          //       ],
-                          //     ),
-                          //     IconButton(
-                          //       padding: EdgeInsets.all(0.0),
-                          //       icon: Icon(Icons.favorite, size: 20.0,color: Colors.red,),
-                          //       onPressed: (){},
-                          //     ),
-                          //     Text("32")
-                          //   ],),
-                          // );
                         }).toList()
                       );
                     },

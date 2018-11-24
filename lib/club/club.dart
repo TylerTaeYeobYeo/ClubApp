@@ -750,62 +750,62 @@ class _ClubPageState extends State<ClubPage> {
                                     icon: Icon(Icons.send),
                                     color: Theme.of(context).primaryColor,
                                     onPressed: ()async{
-                                        if(_new.text =="" && _images.length==0 ) showDialog(
-                                          context: context,
-                                          builder: (context){
-                                            return AlertDialog(
-                                              title: Text("내용이 없습니다!"),
-                                              actions: <Widget>[
-                                                FlatButton(
-                                                  child: Text("확인"),
-                                                  onPressed: ()=>Navigator.pop(context),
-                                                )
-                                              ],
-                                            );
-                                          }
-                                        );
-                                        else{
-                                          setState(() {
-                                            open = false;
-                                          });
-                                          List<String> im = List();
-                                          for(int i =0;i<_images.length;i++){
-                                            String name = Uuid().v4();
-                                            StorageUploadTask uploadTask = FirebaseStorage.instance.ref().child('club/${club.documentID}/$name$i').putFile(_images[i]);
-                                            im.add(await (await uploadTask.onComplete).ref.getDownloadURL());
-                                          }
-                                          int level = 0;
-                                          switch(type){
-                                            case "공개":
-                                              level = 0;
-                                            break;
-                                            case "동아리":
-                                              level = 2;
-                                            break;
-                                          }
-                                          String name = Uuid().v4();
-                                          await Firestore.instance.collection('clubs').document(club.documentID).collection('Board').document(name).setData({
-                                            "body": {
-                                              "content": _new.text,
-                                              "image": im,
-                                            },
-                                            "head":{
-                                              "date": DateTime.now(),
-                                              "photoUrl": cu.currentUser.getphotoUrl(),
-                                              "writer": cu.currentUser.getDisplayName(),
-                                              "uid":cu.currentUser.getUid(),
-                                              "type": level,
-                                            },
-                                            "id": name,
-                                            "like": [],
-                                          });
-                                          setState(() {
-                                            type="공개";
-                                            _new.clear();
-                                            _images.clear();
-                                          });
+                                      if(_new.text =="" && _images.length==0 ) showDialog(
+                                        context: context,
+                                        builder: (context){
+                                          return AlertDialog(
+                                            title: Text("내용이 없습니다!"),
+                                            actions: <Widget>[
+                                              FlatButton(
+                                                child: Text("확인"),
+                                                onPressed: ()=>Navigator.pop(context),
+                                              )
+                                            ],
+                                          );
                                         }
-                                      },
+                                      );
+                                      else{
+                                        setState(() {
+                                          open = false;
+                                        });
+                                        List<String> im = List();
+                                        for(int i =0;i<_images.length;i++){
+                                          String name = Uuid().v4();
+                                          StorageUploadTask uploadTask = FirebaseStorage.instance.ref().child('club/${club.documentID}/$name$i').putFile(_images[i]);
+                                          im.add(await (await uploadTask.onComplete).ref.getDownloadURL());
+                                        }
+                                        int level = 0;
+                                        switch(type){
+                                          case "공개":
+                                            level = 0;
+                                          break;
+                                          case "동아리":
+                                            level = 2;
+                                          break;
+                                        }
+                                        String name = Uuid().v4();
+                                        await Firestore.instance.collection('clubs').document(club.documentID).collection('Board').document(name).setData({
+                                          "body": {
+                                            "content": _new.text,
+                                            "image": im,
+                                          },
+                                          "head":{
+                                            "date": DateTime.now(),
+                                            "photoUrl": cu.currentUser.getphotoUrl(),
+                                            "writer": cu.currentUser.getDisplayName(),
+                                            "uid":cu.currentUser.getUid(),
+                                            "type": level,
+                                          },
+                                          "id": name,
+                                          "like": [],
+                                        });
+                                        setState(() {
+                                          type="공개";
+                                          _new.clear();
+                                          _images.clear();
+                                        });
+                                      }
+                                    },
                                   ),
                                 ],
                               )

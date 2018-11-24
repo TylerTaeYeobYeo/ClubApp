@@ -61,7 +61,10 @@ class _DetailClubPageState extends State<DetailClubPage> {
                 cu.currentUser.getUid() == data.data['head']['uid']
                   ?IconButton(
                     icon: Icon(Icons.delete),
-                    onPressed: (){},
+                    onPressed: (){
+                      Navigator.pop(context);
+                      Firestore.instance.collection('clubs').document(club.documentID).collection('Board').document(data.documentID).delete();
+                    },
                   )
                   :SizedBox(),
               ],

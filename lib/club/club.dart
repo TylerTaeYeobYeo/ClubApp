@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'dart:io';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:intl/intl.dart';
 import 'package:project_club2/club/contact.dart';
 import 'package:project_club2/club/setting.dart';
 import 'package:project_club2/global/currentUser.dart' as cu;
@@ -21,8 +22,9 @@ class ClubPage extends StatefulWidget {
 }
 
 class _ClubPageState extends State<ClubPage> {
+
   final GlobalKey<ScaffoldState> _scaffoldKey = new GlobalKey();
-  Key open = ValueKey(false);
+  // Key open = ValueKey(false);
   int level;
   TextEditingController _request = new TextEditingController();
   TextEditingController _new = new TextEditingController();
@@ -32,7 +34,7 @@ class _ClubPageState extends State<ClubPage> {
   String type = "공개";
   int load = 20;
   String text = "새로운 글쓰기";
-  List<String> like = List();
+  bool open = false;
   DocumentSnapshot club;
   _ClubPageState({Key key, @required this.club})
     : assert(club != null);
@@ -40,9 +42,6 @@ class _ClubPageState extends State<ClubPage> {
   void initState() {
     super.initState();
     level = cu.currentUser.club.getLevel();
-    cu.currentUser.club.getLike().forEach((item){
-      like.add(item.toString());
-    });
   }
   @override
   void dispose() { 
@@ -354,8 +353,6 @@ class _ClubPageState extends State<ClubPage> {
 
   Widget _buildListItem(BuildContext context, DocumentSnapshot data) {
     int type = data.data['head']['type'];
-    bool _liked = false;
-    if(like.contains(data.documentID)) _liked = true;
     String typed;
     switch(type){
       case 2: typed="동아리";
@@ -363,6 +360,7 @@ class _ClubPageState extends State<ClubPage> {
       default: typed = "공개";
       break;
     }
+    List<String> setting = ["공개범위","삭제"].toList();
     return Card(
       key: ValueKey(data.data['id']),
       child: Column(
@@ -374,8 +372,19 @@ class _ClubPageState extends State<ClubPage> {
             ),
             title: Text(data.data['head']['writer'],
               style: TextStyle(color: Theme.of(context).primaryColorDark, fontWeight: FontWeight.bold),),
-            subtitle: Text(data.data['head']['date'].toString()),
-            trailing: Text(typed),
+            subtitle: Text(typed +" "+ DateFormat.yMd().add_jm().format((data.data['head']['date'].toLocal()))),
+            trailing: PopupMenuButton<String>(
+              icon: Icon(Icons.more_vert),
+              itemBuilder: (BuildContext context) {
+                return setting.map((item){
+                  return PopupMenuItem(
+                    value: item,
+                    child: Text(item),
+                  );
+                }).toList();
+              },
+              onSelected: (s)=>choiceAction(s, data),
+            )
           ),
           imageController(data),
           Container(
@@ -389,44 +398,50 @@ class _ClubPageState extends State<ClubPage> {
           ButtonBar(
             alignment: MainAxisAlignment.spaceBetween,
             children: <Widget>[
-              Row(
-                children: <Widget>[
-                  IconButton(
-                    icon: _liked?Icon(Icons.favorite, color: Colors.red,):Icon(Icons.favorite_border, color: Colors.red,),
-                    onPressed: (){
-                      int num = data.data['liked'];
-                      if(_liked) {
-                        like.remove(data.documentID);
-                        Firestore.instance.collection('clubs').document(club.documentID).collection('Board').document(data.documentID).updateData({
-                          "liked": num - 1,
-                        });
-                      }
-                      else{
-                        like.add(data.documentID);
-                        Firestore.instance.collection('clubs').document(club.documentID).collection('Board').document(data.documentID).updateData({
-                          "liked": num + 1,
-                        });
-                      }
-                      Firestore.instance.collection('users').document(cu.currentUser.getUid()).collection('clubs').document(club.documentID).updateData({
-                        "like":like
-                      });
-                      Firestore.instance.collection('clubs').document(club.documentID).collection('users').document(cu.currentUser.getUid()).updateData({
-                        "like":like
-                      });
-                      setState(() {
-                        _liked = !_liked;
-                        cu.currentUser.club.setLike(like);
-                      });
-                    },
-                  ),
-                  Text(data.data['liked'].toString()),
-                ],
+              StreamBuilder<DocumentSnapshot>(
+                // stream: Firestore.instance.collection('users').document(cu.currentUser.getUid()).collection('clubs').document(club.documentID).snapshots(),
+                stream: Firestore.instance.collection('clubs').document(club.documentID).collection('Board').document(data.documentID).snapshots(),
+                builder: (context, snapshots){
+                  if(!snapshots.hasData) return CircularProgressIndicator();
+                  List<dynamic> list = snapshots.data.data['like'];
+                  return Row(
+                    children: <Widget>[
+                      IconButton(
+                        icon: list.contains(cu.currentUser.getUid())?Icon(Icons.favorite, color: Colors.red,):Icon(Icons.favorite_border, color: Colors.red,),
+                        onPressed: (){
+                          List<dynamic> like = List();
+                          list.forEach((item){
+                            like.add(item);
+                          });
+                          if(list.contains(cu.currentUser.getUid())) {
+                            like.remove(cu.currentUser.getUid());
+                            Firestore.instance.collection('clubs').document(club.documentID).collection('Board').document(data.documentID).updateData({
+                              "liked": like.length,
+                              "like": like,
+                            });
+                          }
+                          else{
+                            like.add(cu.currentUser.getUid());
+                            Firestore.instance.collection('clubs').document(club.documentID).collection('Board').document(data.documentID).updateData({
+                              "liked": like.length,
+                              "like": like,
+                            });
+                          }
+                          setState(() {
+                            cu.currentUser.club.setLike(like);
+                          });
+                        },
+                      ),
+                      Text(list.length.toString()),
+                    ],
+                  );
+                },
               ),
               FlatButton(
                 child: Text("더보기", style: TextStyle(color: Theme.of(context).primaryColorDark),),
                 onPressed: (){
                   Navigator.push(context, MaterialPageRoute(
-                    builder: (context)=>DetailClubPage(data: data),
+                    builder: (context)=>DetailClubPage(club: club, data: data),
                   ));
                 },
               ),
@@ -436,10 +451,94 @@ class _ClubPageState extends State<ClubPage> {
       ),
     );
   }
-
+  void choiceAction(String choice, DocumentSnapshot data){
+    if(choice == "공개범위"){
+      showDialog(
+        context: context,
+        builder: (context){
+          return AlertDialog(
+            title: ListTile(
+              title: Text("게시물의 공개범위를 재설정합니다"),
+            ),
+            content: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              children: <Widget>[
+                FlatButton(
+                  child: Text("공개",style: TextStyle(
+                    color: Theme.of(context).primaryColor,
+                  ),),
+                  onPressed: (){
+                    Navigator.pop(context);
+                    Firestore.instance.collection('clubs').document(club.documentID).collection('Board').document(data.documentID).updateData({
+                      "head.type": 0 
+                    });
+                  },
+                ),
+                FlatButton(
+                  child: Text("동아리",style: TextStyle(
+                    color: Theme.of(context).primaryColor,
+                  ),),
+                  onPressed: (){
+                    Navigator.pop(context);
+                    Firestore.instance.collection('clubs').document(club.documentID).collection('Board').document(data.documentID).updateData({
+                      "head.type": 2 
+                    });
+                  },
+                ),
+              ],
+            )
+          );
+        }
+      );
+    }else {
+      if(cu.currentUser.getUid() == data.data['head']['uid'] || cu.currentUser.club.getLevel() == 3){
+        showDialog(
+          context: context,
+          builder: (context){
+            return AlertDialog(
+              title: Text("게시물을 삭제하시겠습니까?"),
+              content: Container(
+                padding: EdgeInsets.all(10.0),
+                child: Text("삭제된 게시물은 복구가 불가능합니다."),
+              ),
+              actions: <Widget>[
+                ButtonBar(
+                  children: <Widget>[
+                    RaisedButton(
+                      child: Text("삭제",style: TextStyle(color: Colors.white),),
+                      color: Theme.of(context).primaryColor,
+                      onPressed: (){
+                        Navigator.pop(context);
+                        Firestore.instance.collection('clubs').document(club.documentID).collection('Board').document(data.documentID).delete();
+                      },
+                    ),
+                    FlatButton(
+                      child: Text("취소",style: TextStyle(color: Theme.of(context).primaryColor),),
+                      onPressed: (){
+                        Navigator.pop(context);
+                      },
+                    )
+                  ],
+                )
+              ],
+            );
+          }
+        );
+      }
+      else showDialog(
+        context: context,
+        builder: (context){
+          return AlertDialog(
+            title: Text("권한이 없습니다."),
+          );
+        }
+      );
+    }
+  }
   @override
   Widget build(BuildContext context) {
     final dropdownMenuOptions = _types
+
       .map((String item) =>
         new DropdownMenuItem<String>(value: item, child: new Text(item))
       )
@@ -509,7 +608,7 @@ class _ClubPageState extends State<ClubPage> {
                   ),
                 ),
                 StreamBuilder<QuerySnapshot>(
-                  stream: Firestore.instance.collection('clubs').document(club.documentID).collection('Board').where("head.type", isLessThanOrEqualTo: level).limit(load).snapshots(),
+                  stream: Firestore.instance.collection('clubs').document(club.documentID).collection('Board').where("head.type", isLessThanOrEqualTo: level).limit(50).snapshots(),
                   builder: (context, snapshot) {
                     if (!snapshot.hasData) return LinearProgressIndicator();
                     return Column(
@@ -517,178 +616,359 @@ class _ClubPageState extends State<ClubPage> {
                     );
                   },
                 ),
-                Card(
-                  child: IconButton(
-                    icon: Icon(Icons.refresh),
-                    onPressed: (){
-                      setState(() {
-                        load +=10;
-                      });
-                    },
-                  ),
-                ),
               ] 
             )
             :ListView(
               children: <Widget>[
                 Card(
                   // color: Theme.of(context).primaryColorLight,
-                  child: ExpansionTile(
-                    onExpansionChanged: (bool v){
-                      if(v){
+                  child: ExpansionPanelList(
+                    expansionCallback: (int index, bool isExpanded) {
+                      if(!open){
                         setState(() {
-                          text = DateTime.now().toLocal().toString();
+                          text = DateFormat.yMd().add_jm().format((DateTime.now().toLocal()));
+                          open = !open;
                         });
                       }
                       else                      
                         setState(() {
+                          open = !open;
                           text = "새로운 글쓰기";
                         });
-                    },                    
-                    leading: CircleAvatar(
-                        backgroundImage: NetworkImage(cu.currentUser.getphotoUrl()),
-                      ),
-                    title: ListTile(
-                      title: Text(cu.currentUser.getDisplayName()),
-                      subtitle: Text(text),
-                    ),
-                    children: <Widget>[
-                      _images.length>0?ListTile(
-                        title: Container(
-                          decoration: BoxDecoration(
-                            image: DecorationImage(
-                              image: AssetImage('assets/logo/image2.png'),
-                              fit: BoxFit.fitWidth,
-                              // colorFilter: ColorFilter.mode(Colors.orange, BlendMode.dst)
-                            )
-                          ),
-                          height: 50.0,
-                          width: 300.0,
-                          child: ListView.builder(
-                            scrollDirection: Axis.horizontal,
-                            itemCount: _images.length,
-                            itemBuilder: (context, int index){
-                              return Container(
-                                width: 100.0,
-                                height: 100.0,
-                                padding: EdgeInsets.symmetric(horizontal: 4.0),
-                                child: FlatButton(
-                                  padding: EdgeInsets.all(0.0),
-                                  child: Hero(
-                                    tag: _images[index].toString(),
-                                    child: Image.file(_images[index], fit: BoxFit.cover),
-                                  ),
-                                  onPressed: ()=>Navigator.push(context, 
-                                    MaterialPageRoute(
-                                      builder: (context) => ImagePage(images: _images, index: index,),
-                                    )
-                                  ),
-                                ),
-                              );
-                            },
-                          ),
-                        ),
-                      ):SizedBox(),
-                      Divider(color: Colors.grey,),
-                      ListTile(
-                        title: Container(
-                          padding: EdgeInsets.symmetric(vertical: 20.0),
-                          child: Column(
-                            children: <Widget>[
-                              TextField(
-                                controller: _new,
-                                maxLines: 7,
-                                keyboardType: TextInputType.multiline,
-                                decoration: InputDecoration(
-                                  hintText: "오늘의 동아리는 어떤가요?",
-                                ),
+                    },
+                    children: <ExpansionPanel>[
+                      ExpansionPanel(
+                        isExpanded: open,
+                        headerBuilder: (context, isExpanded){
+                          return ListTile(
+                            leading: CircleAvatar(
+                                backgroundImage: NetworkImage(cu.currentUser.getphotoUrl()),
                               ),
-                            ],
-                          ),
-                        ),
-                        trailing: Column(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            title: ListTile(
+                              title: Text(cu.currentUser.getDisplayName()),
+                              subtitle: Text(text),
+                            ),
+                          );
+                        },
+                        body: Column(
                           children: <Widget>[
-                            DropdownButton(
-                              value: type,
-                              items: dropdownMenuOptions,
-                              onChanged: (String value) {
-                                setState(() {
-                                  type = value;
-                                });
-                              },
-                            ),
-                            IconButton(
-                              icon: Icon(Icons.camera_alt),
-                              color: Theme.of(context).primaryColor,
-                              onPressed: ()=>getImage(),
-                            ),
-                            IconButton(
-                              icon: Icon(Icons.send),
-                              color: Theme.of(context).primaryColor,
-                              onPressed: ()async{
-                                  if(_new.text =="") showDialog(
-                                    context: context,
-                                    builder: (context){
-                                      return AlertDialog(
-                                        title: Text("내용이 없습니다!"),
-                                        actions: <Widget>[
-                                          FlatButton(
-                                            child: Text("확인"),
-                                            onPressed: ()=>Navigator.pop(context),
+                            _images.length>0?ListTile(
+                              title: Container(
+                                decoration: BoxDecoration(
+                                  image: DecorationImage(
+                                    image: AssetImage('assets/logo/image2.png'),
+                                    fit: BoxFit.fitWidth,
+                                    // colorFilter: ColorFilter.mode(Colors.orange, BlendMode.dst)
+                                  )
+                                ),
+                                height: 50.0,
+                                width: 300.0,
+                                child: ListView.builder(
+                                  scrollDirection: Axis.horizontal,
+                                  itemCount: _images.length,
+                                  itemBuilder: (context, int index){
+                                    return Container(
+                                      child: Stack(
+                                        children: <Widget>[
+                                          Container(
+                                            width: 100.0,
+                                            height: 100.0,
+                                            padding: EdgeInsets.symmetric(horizontal: 4.0),
+                                            child: FlatButton(
+                                              padding: EdgeInsets.all(0.0),
+                                              child: Hero(
+                                                tag: _images[index].toString(),
+                                                child: Image.file(_images[index], fit: BoxFit.cover),
+                                              ),
+                                              onPressed: ()=>Navigator.push(context, 
+                                                MaterialPageRoute(
+                                                  builder: (context) => ImagePage(images: _images, index: index,),
+                                                )
+                                              ),
+                                            ),
+                                          ),
+                                          Row(
+                                            crossAxisAlignment: CrossAxisAlignment.start,
+                                            mainAxisAlignment: MainAxisAlignment.start,
+                                            children: <Widget>[
+                                              SizedBox(width: 80.0,),
+                                              Container(
+                                                child: IconButton(
+                                                  padding: EdgeInsets.all(0.0),
+                                                  icon: Icon(Icons.close),
+                                                  onPressed: (){
+                                                    setState(() {
+                                                      _images.remove(_images[index]);
+                                                    });
+                                                  },
+                                                ),
+                                              )
+                                            ],
                                           )
                                         ],
-                                      );
-                                    }
-                                  );
-                                  else{
-                                    List<String> im = List();
-                                    for(int i =0;i<_images.length;i++){
-                                      String name = Uuid().v4();
-                                      StorageUploadTask uploadTask = FirebaseStorage.instance.ref().child('club/${club.documentID}/$name$i').putFile(_images[i]);
-                                      im.add(await (await uploadTask.onComplete).ref.getDownloadURL());
-                                    }
-                                    int level = 0;
-                                    switch(type){
-                                      case "공개":
-                                        level = 0;
-                                      break;
-                                      case "동아리":
-                                        level = 2;
-                                      break;
-                                      case "임원단":
-                                        level = 3;
-                                      break;
-                                    }
-                                    String name = Uuid().v4();
-                                    await Firestore.instance.collection('clubs').document(club.documentID).collection('Board').document(name).setData({
-                                      "body": {
-                                        "content": _new.text,
-                                        "image": im,
+                                      ),
+                                    );
+                                  },
+                                ),
+                              ),
+                            ):SizedBox(),
+                            Divider(color: Colors.grey,),
+                            ListTile(
+                              title: Container(
+                                padding: EdgeInsets.symmetric(vertical: 20.0),
+                                child: Column(
+                                  children: <Widget>[
+                                    TextField(
+                                      controller: _new,
+                                      maxLines: 7,
+                                      keyboardType: TextInputType.multiline,
+                                      decoration: InputDecoration(
+                                        hintText: "오늘의 동아리는 어떤가요?",
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              trailing: Column(
+                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                children: <Widget>[
+                                  DropdownButton(
+                                    value: type,
+                                    items: dropdownMenuOptions,
+                                    onChanged: (String value) {
+                                      setState(() {
+                                        type = value;
+                                      });
+                                    },
+                                  ),
+                                  IconButton(
+                                    icon: Icon(Icons.camera_alt),
+                                    color: Theme.of(context).primaryColor,
+                                    onPressed: ()=>getImage(),
+                                  ),
+                                  IconButton(
+                                    icon: Icon(Icons.send),
+                                    color: Theme.of(context).primaryColor,
+                                    onPressed: ()async{
+                                        if(_new.text =="" && _images.length==0 ) showDialog(
+                                          context: context,
+                                          builder: (context){
+                                            return AlertDialog(
+                                              title: Text("내용이 없습니다!"),
+                                              actions: <Widget>[
+                                                FlatButton(
+                                                  child: Text("확인"),
+                                                  onPressed: ()=>Navigator.pop(context),
+                                                )
+                                              ],
+                                            );
+                                          }
+                                        );
+                                        else{
+                                          setState(() {
+                                            open = false;
+                                          });
+                                          List<String> im = List();
+                                          for(int i =0;i<_images.length;i++){
+                                            String name = Uuid().v4();
+                                            StorageUploadTask uploadTask = FirebaseStorage.instance.ref().child('club/${club.documentID}/$name$i').putFile(_images[i]);
+                                            im.add(await (await uploadTask.onComplete).ref.getDownloadURL());
+                                          }
+                                          int level = 0;
+                                          switch(type){
+                                            case "공개":
+                                              level = 0;
+                                            break;
+                                            case "동아리":
+                                              level = 2;
+                                            break;
+                                          }
+                                          String name = Uuid().v4();
+                                          await Firestore.instance.collection('clubs').document(club.documentID).collection('Board').document(name).setData({
+                                            "body": {
+                                              "content": _new.text,
+                                              "image": im,
+                                            },
+                                            "head":{
+                                              "date": DateTime.now(),
+                                              "photoUrl": cu.currentUser.getphotoUrl(),
+                                              "writer": cu.currentUser.getDisplayName(),
+                                              "uid":cu.currentUser.getUid(),
+                                              "type": level,
+                                            },
+                                            "id": name,
+                                            "like": [],
+                                          });
+                                          setState(() {
+                                            type="공개";
+                                            _new.clear();
+                                            _images.clear();
+                                          });
+                                        }
                                       },
-                                      "head":{
-                                        "date": DateTime.now(),
-                                        "photoUrl": cu.currentUser.getphotoUrl(),
-                                        "writer": cu.currentUser.getDisplayName(),
-                                        "uid":cu.currentUser.getUid(),
-                                        "type": level,
-                                      },
-                                      "id": name,
-                                    });
-                                    setState(() {
-                                      type="공개";
-                                      _new.clear();
-                                      _images.clear();
-                                      open = ValueKey(false);
-                                    });
-                                  }
-                                },
+                                  ),
+                                ],
+                              )
                             ),
                           ],
-                        )
-                      ),
+                        ),
+                      )
                     ],
                   )
+                  // ExpansionTile(
+                  //   onExpansionChanged: (bool v){
+                  //     if(v){
+                  //       setState(() {
+                  //         text = DateFormat.yMd().add_jm().format((DateTime.now().toLocal()));
+                  //       });
+                  //     }
+                  //     else                      
+                  //       setState(() {
+                  //         text = "새로운 글쓰기";
+                  //       });
+                  //   },                    
+                  //   leading: CircleAvatar(
+                  //       backgroundImage: NetworkImage(cu.currentUser.getphotoUrl()),
+                  //     ),
+                  //   title: ListTile(
+                  //     title: Text(cu.currentUser.getDisplayName()),
+                  //     subtitle: Text(text),
+                  //   ),
+                  //   children: <Widget>[
+                  //     _images.length>0?ListTile(
+                  //       title: Container(
+                  //         decoration: BoxDecoration(
+                  //           image: DecorationImage(
+                  //             image: AssetImage('assets/logo/image2.png'),
+                  //             fit: BoxFit.fitWidth,
+                  //             // colorFilter: ColorFilter.mode(Colors.orange, BlendMode.dst)
+                  //           )
+                  //         ),
+                  //         height: 50.0,
+                  //         width: 300.0,
+                  //         child: ListView.builder(
+                  //           scrollDirection: Axis.horizontal,
+                  //           itemCount: _images.length,
+                  //           itemBuilder: (context, int index){
+                  //             return Container(
+                  //               width: 100.0,
+                  //               height: 100.0,
+                  //               padding: EdgeInsets.symmetric(horizontal: 4.0),
+                  //               child: FlatButton(
+                  //                 padding: EdgeInsets.all(0.0),
+                  //                 child: Hero(
+                  //                   tag: _images[index].toString(),
+                  //                   child: Image.file(_images[index], fit: BoxFit.cover),
+                  //                 ),
+                  //                 onPressed: ()=>Navigator.push(context, 
+                  //                   MaterialPageRoute(
+                  //                     builder: (context) => ImagePage(images: _images, index: index,),
+                  //                   )
+                  //                 ),
+                  //               ),
+                  //             );
+                  //           },
+                  //         ),
+                  //       ),
+                  //     ):SizedBox(),
+                  //     Divider(color: Colors.grey,),
+                  //     ListTile(
+                  //       title: Container(
+                  //         padding: EdgeInsets.symmetric(vertical: 20.0),
+                  //         child: Column(
+                  //           children: <Widget>[
+                  //             TextField(
+                  //               controller: _new,
+                  //               maxLines: 7,
+                  //               keyboardType: TextInputType.multiline,
+                  //               decoration: InputDecoration(
+                  //                 hintText: "오늘의 동아리는 어떤가요?",
+                  //               ),
+                  //             ),
+                  //           ],
+                  //         ),
+                  //       ),
+                  //       trailing: Column(
+                  //         mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  //         children: <Widget>[
+                  //           DropdownButton(
+                  //             value: type,
+                  //             items: dropdownMenuOptions,
+                  //             onChanged: (String value) {
+                  //               setState(() {
+                  //                 type = value;
+                  //               });
+                  //             },
+                  //           ),
+                  //           IconButton(
+                  //             icon: Icon(Icons.camera_alt),
+                  //             color: Theme.of(context).primaryColor,
+                  //             onPressed: ()=>getImage(),
+                  //           ),
+                  //           IconButton(
+                  //             icon: Icon(Icons.send),
+                  //             color: Theme.of(context).primaryColor,
+                  //             onPressed: ()async{
+                  //                 if(_new.text =="") showDialog(
+                  //                   context: context,
+                  //                   builder: (context){
+                  //                     return AlertDialog(
+                  //                       title: Text("내용이 없습니다!"),
+                  //                       actions: <Widget>[
+                  //                         FlatButton(
+                  //                           child: Text("확인"),
+                  //                           onPressed: ()=>Navigator.pop(context),
+                  //                         )
+                  //                       ],
+                  //                     );
+                  //                   }
+                  //                 );
+                  //                 else{
+                  //                   List<String> im = List();
+                  //                   for(int i =0;i<_images.length;i++){
+                  //                     String name = Uuid().v4();
+                  //                     StorageUploadTask uploadTask = FirebaseStorage.instance.ref().child('club/${club.documentID}/$name$i').putFile(_images[i]);
+                  //                     im.add(await (await uploadTask.onComplete).ref.getDownloadURL());
+                  //                   }
+                  //                   int level = 0;
+                  //                   switch(type){
+                  //                     case "공개":
+                  //                       level = 0;
+                  //                     break;
+                  //                     case "동아리":
+                  //                       level = 2;
+                  //                     break;
+                  //                   }
+                  //                   String name = Uuid().v4();
+                  //                   await Firestore.instance.collection('clubs').document(club.documentID).collection('Board').document(name).setData({
+                  //                     "body": {
+                  //                       "content": _new.text,
+                  //                       "image": im,
+                  //                     },
+                  //                     "head":{
+                  //                       "date": DateTime.now(),
+                  //                       "photoUrl": cu.currentUser.getphotoUrl(),
+                  //                       "writer": cu.currentUser.getDisplayName(),
+                  //                       "uid":cu.currentUser.getUid(),
+                  //                       "type": level,
+                  //                     },
+                  //                     "id": name,
+                  //                     "like": [],
+                  //                   });
+                  //                   setState(() {
+                  //                     type="공개";
+                  //                     _new.clear();
+                  //                     _images.clear();
+                  //                     open = ValueKey(false);
+                  //                   });
+                  //                 }
+                  //               },
+                  //           ),
+                  //         ],
+                  //       )
+                  //     ),
+                  //   ],
+                  // )
                 ),
                 StreamBuilder<QuerySnapshot>(
                   stream: Firestore.instance.collection('clubs').document(club.documentID).collection('Board').orderBy("head.date", descending: true).limit(load).snapshots(),

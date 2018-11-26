@@ -23,7 +23,8 @@ dependencies:
   image_picker:
   photo_view:
   file_picker:
-
+  simple_permissions:
+  
 dev_dependencies:
   flutter_test:
     sdk: flutter

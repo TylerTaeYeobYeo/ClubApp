@@ -453,43 +453,58 @@ class _ClubPageState extends State<ClubPage> {
   }
   void choiceAction(String choice, DocumentSnapshot data){
     if(choice == "공개범위"){
-      showDialog(
-        context: context,
-        builder: (context){
-          return AlertDialog(
-            title: ListTile(
-              title: Text("게시물의 공개범위를 재설정합니다"),
-            ),
-            content: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-              children: <Widget>[
-                FlatButton(
-                  child: Text("공개",style: TextStyle(
-                    color: Theme.of(context).primaryColor,
-                  ),),
-                  onPressed: (){
-                    Navigator.pop(context);
-                    Firestore.instance.collection('clubs').document(club.documentID).collection('Board').document(data.documentID).updateData({
-                      "head.type": 0 
-                    });
-                  },
-                ),
-                FlatButton(
-                  child: Text("동아리",style: TextStyle(
-                    color: Theme.of(context).primaryColor,
-                  ),),
-                  onPressed: (){
-                    Navigator.pop(context);
-                    Firestore.instance.collection('clubs').document(club.documentID).collection('Board').document(data.documentID).updateData({
-                      "head.type": 2 
-                    });
-                  },
-                ),
-              ],
-            )
-          );
-        }
-      );
+      if(cu.currentUser.getUid() == data.data['head']['uid'] || cu.currentUser.club.getLevel() == 3){
+        showDialog(
+          context: context,
+          builder: (context){
+            return AlertDialog(
+              title: ListTile(
+                title: Text("게시물의 공개범위를 재설정합니다"),
+              ),
+              content: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                children: <Widget>[
+                  FlatButton(
+                    child: Text("공개",style: TextStyle(
+                      color: Theme.of(context).primaryColor,
+                    ),),
+                    onPressed: (){
+                      Navigator.pop(context);
+                      Firestore.instance.collection('clubs').document(club.documentID).collection('Board').document(data.documentID).updateData({
+                        "head.type": 0 
+                      });
+                    },
+                  ),
+                  FlatButton(
+                    child: Text("동아리",style: TextStyle(
+                      color: Theme.of(context).primaryColor,
+                    ),),
+                    onPressed: (){
+                      Navigator.pop(context);
+                      Firestore.instance.collection('clubs').document(club.documentID).collection('Board').document(data.documentID).updateData({
+                        "head.type": 2 
+                      });
+                    },
+                  ),
+                ],
+              )
+            );
+          }
+        );
+      }
+      else{
+        showDialog(
+          context: context,
+          builder: (context){
+            return AlertDialog(
+              title: ListTile(
+                leading: Icon(Icons.warning),
+                title: Text("권한이 없습니다."),
+              ),
+            );
+          }
+        );
+      }
     }else {
       if(cu.currentUser.getUid() == data.data['head']['uid'] || cu.currentUser.club.getLevel() == 3){
         showDialog(
@@ -529,7 +544,10 @@ class _ClubPageState extends State<ClubPage> {
         context: context,
         builder: (context){
           return AlertDialog(
-            title: Text("권한이 없습니다."),
+            title: ListTile(
+              leading: Icon(Icons.warning),
+              title: Text("권한이 없습니다."),
+            ),
           );
         }
       );

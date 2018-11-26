@@ -4,9 +4,10 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:file_picker/file_picker.dart';
 
+
 class CreateDataPage extends StatefulWidget {
   final DocumentSnapshot data;
-  int index;
+  final int index;
   CreateDataPage({Key key, @required this.data, @required this.index})
     : assert(data != null),
     super(key: key);
@@ -21,22 +22,30 @@ class _CreateDataPageState extends State<CreateDataPage> {
   TextEditingController _name = TextEditingController();
   List<String> _types = ["인수인계","활동일지","회계"].toList();
   String selected = "";
-  String _file;
+
   @override
-    void initState() {
-      selected = _types.elementAt(index);
-      super.initState();
-    }
+  void initState() {
+    selected = _types.elementAt(index);
+    super.initState();
+  }
   @override
   void dispose() { 
     _name.dispose();
     super.dispose();
   }
+  String _path = '...';
+  String _fileName = '...';
 
-  void _openPDFfile()async{
-    _file = await FilePicker.getFilePath(type: FileType.PDF);
+  void _openFileExplorer() async {
+      _path = await FilePicker.getFilePath(type: FileType.PDF);
+    
+
+    if (!mounted) return;
+
+    setState(() {
+      _fileName = _path != null ? _path.split('/').last : '...';
+    });
   }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -100,11 +109,14 @@ class _CreateDataPageState extends State<CreateDataPage> {
               leading: Text("파일:"),
               title: Text("PDF파일형식만 지원합니다"),
               children: <Widget>[
+                _fileName!=null?ListTile(
+                  title: Text(_fileName),
+                ):SizedBox(),
                 ButtonBar(
                   children: <Widget>[
                     FlatButton(
                       child: Text("업로드"),
-                      onPressed: (){},
+                      onPressed: ()=>_openFileExplorer(),
                     )
                   ],
                 )

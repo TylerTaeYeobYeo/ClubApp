@@ -149,7 +149,7 @@ class _NewClubPageState extends State<NewClubPage> {
                               ],
                             ),
                             ExpansionTile(
-                              title: Text("동아리 분류"),
+                              title: Text("소속 대학교"),
                               children: <Widget>[
                                 ListTile(
                                   title: TextField(
@@ -157,7 +157,8 @@ class _NewClubPageState extends State<NewClubPage> {
                                     maxLines: 1,
                                     controller: _type,
                                     decoration: InputDecoration(
-                                      hintText: "ex) 음악/밴드",
+                                      hintText: "ex) 한동대학교",
+                                      helperText: "대학교명 이외의 이름으로 생성시 경고 없이 삭제될 수 있습니다."
                                     ),
                                   ),
                                 )
@@ -287,13 +288,13 @@ class _NewClubPageState extends State<NewClubPage> {
                             ),
                           ),
                           ListTile(
-                            leading: Text("동아리 분류"),
+                            leading: Text("소속 대학교"),
                             title: TextField(
                               controller: _type,
                               maxLines: 1,
                               maxLength: 15,
                               decoration: InputDecoration(
-                                hintText: "ex) 전공/친목",
+                                hintText: "ex) 한동대학교",
                                 helperText: "15자 이내로 입력해주세요"
                               ),
                             ),
@@ -327,7 +328,7 @@ class _NewClubPageState extends State<NewClubPage> {
                               keyboardType: TextInputType.multiline,
                               maxLines: 5,
                               decoration: InputDecoration(
-                                hintText: "ex) 모집일정: 12/15일까지\n전산전자공학부 유일의 친목동아리",
+                                hintText: "ex) 모집일정: 12/15일까지 전산전자공학부 유일의 친목동아리",
                                 helperText: "5줄 이내로 입력해주세요"
                               ),
                             ),

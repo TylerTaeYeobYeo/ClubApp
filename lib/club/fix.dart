@@ -142,7 +142,7 @@ class _FixPageState extends State<FixPage> {
                               ],
                             ),
                             ExpansionTile(
-                              title: Text("동아리 분류"),
+                              title: Text("소속 대학"),
                               children: <Widget>[
                                 ListTile(
                                   title: TextField(

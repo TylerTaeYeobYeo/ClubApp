@@ -4,7 +4,7 @@
 
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:project_club2/club/new.dart';
+import 'package:project_club2/club/newRDB.dart';
 
 class DatabasePage extends StatefulWidget {
   final DocumentSnapshot data;

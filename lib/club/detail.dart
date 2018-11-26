@@ -3,7 +3,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:intl/intl.dart';
 import 'dart:io';
 import 'package:image_picker/image_picker.dart';
-
+import 'package:project_club2/club/imageF.dart';
 import 'package:project_club2/club/imageN.dart';
 import 'package:project_club2/global/currentUser.dart' as cu;
 
@@ -30,6 +30,16 @@ class _DetailClubPageState extends State<DetailClubPage> {
 
   String typed= "";
   String fixed= "";
+
+  File _image;
+  Future getImage() async {
+    var image = await ImagePicker.pickImage(source: ImageSource.gallery);
+    if (image == null) return;
+    setState(() {
+      _image = image;
+    });
+  }
+
   @override
   void initState() {
     int type = data.data['head']['type'];
@@ -326,6 +336,33 @@ class _DetailClubPageState extends State<DetailClubPage> {
             Card(
               child: Column(
                 children: <Widget>[
+                  _image!=null
+                  ?Container(
+                    height: 50.0,
+                    child: Row(
+                      children: <Widget>[
+                        FlatButton(
+                          child: Image.file(_image, fit: BoxFit.fill,),
+                          onPressed: (){
+                            List<File> list = List();
+                            list.add(_image);
+                            Navigator.push(context, MaterialPageRoute(
+                              builder: (context)=>ImagePage(images: list, index: 0,),
+                            ));
+                          },
+                        ),
+                        IconButton(
+                          icon: Icon(Icons.close),
+                          onPressed: (){
+                            setState(() {
+                              _image = null;
+                            });
+                          },
+                        )
+                      ],
+                    )
+                  )
+                  :SizedBox(),
                   ListTile(
                     leading: CircleAvatar(
                       backgroundImage: NetworkImage(cu.currentUser.getphotoUrl()),
@@ -338,25 +375,40 @@ class _DetailClubPageState extends State<DetailClubPage> {
                         maxLines: 2,
                         decoration: InputDecoration(
                           hintText: "댓글을 달아주세요",
-                        ),
+                        ),  
                       ),
                     ),
-                    trailing: IconButton(
-                      icon: Icon(Icons.send),
-                      color: Theme.of(context).primaryColor,
-                      onPressed: (){
-                        String body = _comment.text;
-                        _comment.clear();
-                        Firestore.instance.collection('clubs').document(club.documentID).collection('Board').document(data.documentID).collection('comments').add({
-                          "date": DateTime.now(),
-                          "writer": cu.currentUser.getDisplayName(),
-                          "photoUrl":cu.currentUser.getphotoUrl(),
-                          "uid":cu.currentUser.getUid(),
-                          "body": body,
-                          "like": [],
-                        });
-                      },
-                    ),
+                    trailing: Container(
+                      // width: 96.0,
+                      width: 48.0,
+                      child: Row(
+                        children: <Widget>[
+                          // IconButton(  //업로드 구현을 아직 안했음 query와 streambuilder내에 보여줄수만 있으면 됨
+                          //   padding: EdgeInsets.all(0.0),
+                          //   icon: Icon(Icons.camera_alt,size: 20.0,),
+                          //   color: Theme.of(context).primaryColor,
+                          //   onPressed: ()=>getImage(),
+                          // ),
+                          IconButton(
+                            padding: EdgeInsets.all(0.0),
+                            icon: Icon(Icons.send,size: 20.0,),
+                            color: Theme.of(context).primaryColor,
+                            onPressed: (){
+                              String body = _comment.text;
+                              _comment.clear();
+                              Firestore.instance.collection('clubs').document(club.documentID).collection('Board').document(data.documentID).collection('comments').add({
+                                "date": DateTime.now(),
+                                "writer": cu.currentUser.getDisplayName(),
+                                "photoUrl":cu.currentUser.getphotoUrl(),
+                                "uid":cu.currentUser.getUid(),
+                                "body": body,
+                                "like": [],
+                              });
+                            },
+                          ),
+                        ],
+                      ),
+                    )
                   ),
                   StreamBuilder<QuerySnapshot>(
                     stream: Firestore.instance.collection('clubs').document(club.documentID).collection('Board').document(data.documentID).collection('comments').orderBy("date",descending: true).snapshots(),

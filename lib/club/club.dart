@@ -524,6 +524,7 @@ class _ClubPageState extends State<ClubPage> {
                       color: Theme.of(context).primaryColor,
                       onPressed: (){
                         Navigator.pop(context);
+                        for(int i = 0; i< data.data['body']['image'].length ;i++) FirebaseStorage.instance.ref().child('club/${club.documentID}/${data.documentID}$i').delete();
                         Firestore.instance.collection('clubs').document(club.documentID).collection('Board').document(data.documentID).delete();
                       },
                     ),
@@ -787,8 +788,8 @@ class _ClubPageState extends State<ClubPage> {
                                           open = false;
                                         });
                                         List<String> im = List();
+                                        String name = Uuid().v4();
                                         for(int i =0;i<_images.length;i++){
-                                          String name = Uuid().v4();
                                           StorageUploadTask uploadTask = FirebaseStorage.instance.ref().child('club/${club.documentID}/$name$i').putFile(_images[i]);
                                           im.add(await (await uploadTask.onComplete).ref.getDownloadURL());
                                         }
@@ -801,7 +802,6 @@ class _ClubPageState extends State<ClubPage> {
                                             level = 2;
                                           break;
                                         }
-                                        String name = Uuid().v4();
                                         await Firestore.instance.collection('clubs').document(club.documentID).collection('Board').document(name).setData({
                                           "body": {
                                             "content": _new.text,

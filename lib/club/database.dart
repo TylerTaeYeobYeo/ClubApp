@@ -1,10 +1,14 @@
  /* 
   * 운영자료
   */
+import 'dart:io';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:path_provider/path_provider.dart';
 import 'package:project_club2/club/newRDB.dart';
+import 'package:http/http.dart' as http;
 
 class DatabasePage extends StatefulWidget {
   final DocumentSnapshot data;
@@ -17,6 +21,7 @@ class DatabasePage extends StatefulWidget {
 class _DatabasePageState extends State<DatabasePage> with SingleTickerProviderStateMixin{
   DocumentSnapshot club;
   TabController _tabController;
+  static var httpClient = new HttpClient();
 
   _DatabasePageState({Key key, @required this.club})
     : assert(club != null);
@@ -31,6 +36,16 @@ class _DatabasePageState extends State<DatabasePage> with SingleTickerProviderSt
   void dispose() { 
     _tabController.dispose();
     super.dispose();
+  }
+  
+  Future<File> _downloadFile(String url, String filename) async {
+    var request = await httpClient.getUrl(Uri.parse(url));
+    var response = await request.close();
+    var bytes = await consolidateHttpClientResponseBytes(response);
+    String dir = (await getApplicationDocumentsDirectory()).path;
+    File file = new File('$dir/$filename');
+    await file.writeAsBytes(bytes);
+    return file;
   }
 
   @override
@@ -70,9 +85,31 @@ class _DatabasePageState extends State<DatabasePage> with SingleTickerProviderSt
               return ListView(
                 children: snapshots.data.documents.map((doc){
                   return Card(
-                    key: ValueKey(doc.data['id']),
-                    child: ListTile(
-                      title: Text(doc.data['name']),
+                    key: ValueKey(doc.documentID),
+                    child: ExpansionTile(
+                      title: Text(doc.data['title']),
+                      // leading: Text(doc.data['writer']),
+                      children: <Widget>[
+                        // ListTile(
+                        //   leading: Text("작성자"),
+                        //   title: Text(doc.data['writer']),
+                        // ),
+                        ListTile(
+                          leading: Text("설명"),
+                          title: Text(doc.data['description']),
+                        ),
+                        ListTile(
+                          leading: Text("파일"),
+                          title: Text(doc.data['fileName']),
+                          trailing: IconButton(
+                            icon: Icon(Icons.file_download),
+                            onPressed: ()async{
+                              // _downloadFile(doc.data['file'],doc.data['fileName']);
+                              
+                            },
+                          ),
+                        ),
+                      ],
                     ),
                   );
                 }).toList(),
@@ -86,9 +123,9 @@ class _DatabasePageState extends State<DatabasePage> with SingleTickerProviderSt
               return ListView(
                 children: snapshots.data.documents.map((doc){
                   return Card(
-                    key: ValueKey(doc.data['id']),
+                    key: ValueKey(doc.data['title']),
                     child: ListTile(
-                      title: Text(doc.data['name']),
+                      title: Text(doc.data['writer']),
                     ),
                   );
                 }).toList(),
@@ -102,9 +139,9 @@ class _DatabasePageState extends State<DatabasePage> with SingleTickerProviderSt
               return ListView(
                 children: snapshots.data.documents.map((doc){
                   return Card(
-                    key: ValueKey(doc.data['id']),
+                    key: ValueKey(doc.data['title']),
                     child: ListTile(
-                      title: Text(doc.data['name']),
+                      title: Text(doc.data['writer']),
                     ),
                   );
                 }).toList(),

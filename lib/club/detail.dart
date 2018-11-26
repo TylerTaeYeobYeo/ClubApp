@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_storage/firebase_storage.dart';
 import 'package:intl/intl.dart';
 import 'dart:io';
 import 'package:image_picker/image_picker.dart';
@@ -142,6 +143,7 @@ class _DetailClubPageState extends State<DetailClubPage> {
                                 onPressed: (){
                                   Navigator.pop(context);
                                   Navigator.pop(context);
+                                  for(int i = 0; i< data.data['body']['image'].length ;i++) FirebaseStorage.instance.ref().child('club/${club.documentID}/${data.documentID}$i').delete();
                                   Firestore.instance.collection('clubs').document(club.documentID).collection('Board').document(data.documentID).delete();
                                 },
                               )

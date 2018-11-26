@@ -16,14 +16,14 @@ dependencies:
   firebase_auth:
   firebase_storage:
   path_provider:
-
   uuid:
   charts_flutter:
   url_launcher:
   image_picker:
   photo_view:
   file_picker:
-
+  http: ^0.12.0
+  
 dev_dependencies:
   flutter_test:
     sdk: flutter

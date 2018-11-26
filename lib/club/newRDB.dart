@@ -70,18 +70,32 @@ class _CreateDataPageState extends State<CreateDataPage> {
           FlatButton(
             child: Text("업로드"),
             onPressed: ()async{
-              Navigator.pop(context);
               if(upload != null){
-                StorageUploadTask uploadTask = FirebaseStorage.instance.ref().child('club/${club.documentID}/run/$index/${_fileNameController.text}').putFile(upload);
-                String url = await (await uploadTask.onComplete).ref.getDownloadURL();
-                Firestore.instance.collection('clubs').document(club.documentID).collection('run').add({
-                  "writer": cu.currentUser.getDisplayName(),
-                  "uid": cu.currentUser.getUid(),
-                  "title": _name.text,
-                  "description":_description.text,
-                  "type": index,
-                  "file": url,
-                });
+                if(_fileNameController.text != ""){
+                  Navigator.pop(context);
+                  StorageUploadTask uploadTask = FirebaseStorage.instance.ref().child('club/${club.documentID}/run/$index/${_fileNameController.text}').putFile(upload);
+                  String url = await (await uploadTask.onComplete).ref.getDownloadURL();
+                  Firestore.instance.collection('clubs').document(club.documentID).collection('run').add({
+                    "writer": cu.currentUser.getDisplayName(),
+                    "uid": cu.currentUser.getUid(),
+                    "title": _name.text,
+                    "description":_description.text,
+                    "type": index,
+                    "fileName": _fileNameController.text,
+                    "file": url,
+                  });
+                }
+              }
+              else{
+                showDialog(
+                  context: context,
+                  builder: (context){
+                    return AlertDialog(
+                      title: Text("파일 오류"),
+                      content: Text("파일이 없거나 이름이 없습니다."),
+                    );
+                  }
+                );
               }
             },
           )

@@ -2,8 +2,15 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_storage/firebase_storage.dart';
 import 'package:file_picker/file_picker.dart';
 
+import 'package:project_club2/global/currentUser.dart' as cu;
+
+class CustomFile{
+  File file;
+  String name = "";
+}
 
 class CreateDataPage extends StatefulWidget {
   final DocumentSnapshot data;
@@ -20,38 +27,65 @@ class _CreateDataPageState extends State<CreateDataPage> {
   _CreateDataPageState({Key key, @required this.club, @required this.index})
     : assert(club != null);
   TextEditingController _name = TextEditingController();
+  TextEditingController _description = TextEditingController();
+  TextEditingController _fileNameController = TextEditingController();
   List<String> _types = ["인수인계","활동일지","회계"].toList();
   String selected = "";
-
+  File upload;
+  // List<CustomFile> _files = List();
   @override
   void initState() {
     selected = _types.elementAt(index);
     super.initState();
   }
   @override
-  void dispose() { 
+  void dispose() {
+    upload.delete();
     _name.dispose();
+    _description.dispose();
+    _fileNameController.dispose();
     super.dispose();
   }
-  String _path = '...';
-  String _fileName = '...';
 
   void _openFileExplorer() async {
-      _path = await FilePicker.getFilePath(type: FileType.PDF);
-    
-
+    // CustomFile upload = new CustomFile();
+    String  _path = await FilePicker.getFilePath(type: FileType.PDF);
     if (!mounted) return;
-
     setState(() {
-      _fileName = _path != null ? _path.split('/').last : '...';
+      upload = File(_path);
     });
+    // upload.file = File(_path);
+    // upload.name = "클릭해서 파일이름을 변경해주세요";
+    // setState(() {
+    //   _files.add(upload);
+    // });
   }
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         title: Text("새 파일 업로드"),
-        centerTitle: true,
+        centerTitle: true, 
+        actions: <Widget>[
+          FlatButton(
+            child: Text("업로드"),
+            onPressed: ()async{
+              Navigator.pop(context);
+              if(upload != null){
+                StorageUploadTask uploadTask = FirebaseStorage.instance.ref().child('club/${club.documentID}/run/$index/${_fileNameController.text}').putFile(upload);
+                String url = await (await uploadTask.onComplete).ref.getDownloadURL();
+                Firestore.instance.collection('clubs').document(club.documentID).collection('run').add({
+                  "writer": cu.currentUser.getDisplayName(),
+                  "uid": cu.currentUser.getUid(),
+                  "title": _name.text,
+                  "description":_description.text,
+                  "type": index,
+                  "file": url,
+                });
+              }
+            },
+          )
+        ],
       ),
       body: ListView(
         children: <Widget>[
@@ -94,7 +128,7 @@ class _CreateDataPageState extends State<CreateDataPage> {
               title: Container(
                 padding: EdgeInsets.symmetric(vertical: 20.0),
                 child: TextField(
-                  controller: _name,
+                  controller: _description,
                   keyboardType: TextInputType.multiline,
                   maxLines: 5,
                   decoration: InputDecoration(
@@ -109,17 +143,34 @@ class _CreateDataPageState extends State<CreateDataPage> {
               leading: Text("파일:"),
               title: Text("PDF파일형식만 지원합니다"),
               children: <Widget>[
-                _fileName!=null?ListTile(
-                  title: Text(_fileName),
-                ):SizedBox(),
-                ButtonBar(
+                // upload==null?SizedBox():Text(upload.path),
+                upload==null?SizedBox():
+                ListTile(
+                  leading: Icon(Icons.file_upload),
+                  title: TextField(
+                    controller: _fileNameController,
+                    decoration: InputDecoration(
+                      hintText: "ex) 2018-2 결산",
+                      helperText: "파일이름을 입력해주세요"
+                    ),
+                  ),
+                  trailing: IconButton(
+                    icon: Icon(Icons.close),
+                    onPressed: (){
+                      setState(() {
+                        upload = null;
+                      });
+                    },
+                  ),
+                ),
+                upload==null?ButtonBar(
                   children: <Widget>[
                     FlatButton(
-                      child: Text("업로드"),
+                      child: Text("파일추가"),
                       onPressed: ()=>_openFileExplorer(),
                     )
                   ],
-                )
+                ):SizedBox(),
               ],
             ),
           ),

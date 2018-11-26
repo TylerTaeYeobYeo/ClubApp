@@ -75,15 +75,16 @@ class _DetailClubPageState extends State<DetailClubPage> {
               floating: true,
               snap: true,
               backgroundColor: Colors.white,
-              actions: edit?<Widget>[
-                IconButton(
+              leading: edit?IconButton(
                   icon: Icon(Icons.cancel),
                   onPressed: (){
                     setState(() {
                       edit=!edit;
                     });
                   },
-                ),
+                ):null,
+              actions: edit?<Widget>[
+                
                 IconButton(
                   icon: Icon(Icons.save),
                   onPressed: (){

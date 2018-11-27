@@ -8,7 +8,8 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:project_club2/club/newRDB.dart';
-import 'package:http/http.dart' as http;
+// import 'package:http/http.dart' as http;
+import 'package:dio/dio.dart';
 
 class DatabasePage extends StatefulWidget {
   final DocumentSnapshot data;
@@ -21,7 +22,9 @@ class DatabasePage extends StatefulWidget {
 class _DatabasePageState extends State<DatabasePage> with SingleTickerProviderStateMixin{
   DocumentSnapshot club;
   TabController _tabController;
-  static var httpClient = new HttpClient();
+  // static var httpClient = new HttpClient();
+  bool downloading = false;
+  var progressString = "";
 
   _DatabasePageState({Key key, @required this.club})
     : assert(club != null);
@@ -39,13 +42,36 @@ class _DatabasePageState extends State<DatabasePage> with SingleTickerProviderSt
   }
   
   Future<File> _downloadFile(String url, String filename) async {
-    var request = await httpClient.getUrl(Uri.parse(url));
-    var response = await request.close();
-    var bytes = await consolidateHttpClientResponseBytes(response);
-    String dir = (await getApplicationDocumentsDirectory()).path;
-    File file = new File('$dir/$filename');
-    await file.writeAsBytes(bytes);
-    return file;
+    // var request = await httpClient.getUrl(Uri.parse(url));
+    // var response = await request.close();
+    // var bytes = await consolidateHttpClientResponseBytes(response);
+    // String dir = (await getApplicationDocumentsDirectory()).path;
+    // File file = new File('$dir/$filename');
+    // await file.writeAsBytes(bytes);
+    // return file;
+    Dio dio = Dio();
+
+    try {
+      var dir = await getApplicationDocumentsDirectory();
+
+      await dio.download(url, "${dir.path}/$filename.pdf",
+          onProgress: (rec, total) {
+        print("Rec: $rec , Total: $total");
+
+        setState(() {
+          downloading = true;
+          progressString = ((rec / total) * 100).toStringAsFixed(0) + "%";
+        });
+      });
+    } catch (e) {
+      print(e);
+    }
+
+    setState(() {
+      downloading = false;
+      progressString = "Completed";
+    });
+    print("Download completed");
   }
 
   @override
@@ -103,9 +129,8 @@ class _DatabasePageState extends State<DatabasePage> with SingleTickerProviderSt
                           title: Text(doc.data['fileName']),
                           trailing: IconButton(
                             icon: Icon(Icons.file_download),
-                            onPressed: ()async{
-                              // _downloadFile(doc.data['file'],doc.data['fileName']);
-                              
+                            onPressed: (){
+                              _downloadFile(doc.data['file'],doc.data['fileName']);
                             },
                           ),
                         ),

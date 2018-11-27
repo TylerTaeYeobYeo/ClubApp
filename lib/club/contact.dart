@@ -23,15 +23,26 @@ class _ContactPageState extends State<ContactPage>{
   String startcode;
   String endcode;
 
+  ScrollController _scrollController = ScrollController();
+  int _load =20;
   @override
   void initState() {
-    term = Firestore.instance.collection('clubs').document(data.documentID).collection('users').orderBy("name").snapshots();
+    term = Firestore.instance.collection('clubs').document(data.documentID).collection('users').orderBy("name").limit(_load).snapshots();
+    _scrollController.addListener((){
+      if(_scrollController.position.pixels == _scrollController.position.maxScrollExtent){
+        setState(() {
+          if(_load<10000)
+          _load += 20;
+        });
+      }
+    });
     super.initState();
   }
 
   @override
   void dispose() { 
     _search.dispose();
+    _scrollController.dispose();
     super.dispose();
   }  
   
@@ -83,9 +94,10 @@ class _ContactPageState extends State<ContactPage>{
                     icon: Icon(Icons.search),
                     onPressed: (){
                       setState(() {
-                        if(_search.text =="") term = Firestore.instance.collection('clubs').document(data.documentID).collection('users').orderBy("name").snapshots();
+                        if(_search.text =="") term = Firestore.instance.collection('clubs').document(data.documentID).collection('users').orderBy("name").limit(_load).snapshots();
                         else {
-                          term = Firestore.instance.collection('clubs').document(data.documentID).collection('users').where("name", isGreaterThanOrEqualTo: startcode).where("name", isLessThan: endcode).orderBy("name").snapshots();
+                          _load = 20;
+                          term = Firestore.instance.collection('clubs').document(data.documentID).collection('users').where("name", isGreaterThanOrEqualTo: startcode).where("name", isLessThan: endcode).orderBy("name").limit(_load).snapshots();
                           strSearch = _search.text;
                           strlength = strSearch.length;
                           strFrontCode = strSearch.substring(0, strlength-1);
@@ -103,11 +115,12 @@ class _ContactPageState extends State<ContactPage>{
                   stream: term,
                   builder: (context, snapshots){
                     return ListView(
+                      controller: _scrollController,
                       children: snapshots.data.documents.map((user){
                         int a = user.data['level'];
                         String state = "";
-                        if(user.data['state']!= null){
-                          switch(user.data['state']){
+                        if(user.data['title']!= null){
+                          switch(user.data['title']){
                             case 0:
                               state = "회장";
                               break;

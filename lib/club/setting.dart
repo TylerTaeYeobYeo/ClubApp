@@ -172,7 +172,8 @@ class _ClubSettingPageState extends State<ClubSettingPage> {
                                         color: Theme.of(context).primaryColor,
                                         onPressed: ()async{
                                           Navigator.popUntil(context, ModalRoute.withName('/home'));
-                                          FirebaseStorage.instance.ref().child('clubs/background/${data.documentID}').delete();
+                                          // FirebaseStorage.instance.ref().child('club/${data.documentID}}/background').delete();
+                                          if(data.data['image'] != "http://image.sportsseoul.com/2018/01/02/news/2018010201000018800000491.jpg") FirebaseStorage.instance.ref().child('club/${data.documentID}/background').delete();
                                           QuerySnapshot doc = await Firestore.instance.collection('users').getDocuments();
                                           doc.documents.forEach((user){
                                             Firestore.instance.collection('users').document(user.documentID).collection('clubs').document(data.documentID).delete();

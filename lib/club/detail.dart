@@ -21,6 +21,8 @@ class _DetailClubPageState extends State<DetailClubPage> {
   TextEditingController _comment = TextEditingController();
   TextEditingController controller = TextEditingController(); //for comments fixing
   TextEditingController _body = TextEditingController();
+  ScrollController _scrollController = ScrollController();
+  int _load = 20;
   
   final DocumentSnapshot club;
   final DocumentSnapshot data;
@@ -55,6 +57,21 @@ class _DetailClubPageState extends State<DetailClubPage> {
       _images.add(image);
     });
     _body.text = data.data['body']['content'];
+    _scrollController.addListener((){
+      if(_scrollController.position.pixels == _scrollController.position.maxScrollExtent){
+        setState(() {
+          if(_load < 10000)
+          _load += 20;
+        });
+      }
+    });
+    _scrollController.addListener((){
+      if(_scrollController.position.pixels == _scrollController.position.minScrollExtent){
+        setState(() {
+          _load = 20;
+        });
+      }
+    });
     super.initState();
   }
   @override
@@ -70,6 +87,7 @@ class _DetailClubPageState extends State<DetailClubPage> {
     return Scaffold(
       backgroundColor: Colors.white,
       body: NestedScrollView(
+        controller: _scrollController,
         headerSliverBuilder: (BuildContext context, bool innerBoxIsScrolled) {
           return [
             SliverAppBar(
@@ -414,7 +432,7 @@ class _DetailClubPageState extends State<DetailClubPage> {
                     )
                   ),
                   StreamBuilder<QuerySnapshot>(
-                    stream: Firestore.instance.collection('clubs').document(club.documentID).collection('Board').document(data.documentID).collection('comments').orderBy("date",descending: true).snapshots(),
+                    stream: Firestore.instance.collection('clubs').document(club.documentID).collection('Board').document(data.documentID).collection('comments').orderBy("date",descending: true).limit(_load).snapshots(),
                     builder: (context,snapshots){
                       if(!snapshots.hasData) return LinearProgressIndicator();
                       return Column(

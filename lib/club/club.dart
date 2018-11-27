@@ -24,7 +24,6 @@ class ClubPage extends StatefulWidget {
 class _ClubPageState extends State<ClubPage> {
 
   final GlobalKey<ScaffoldState> _scaffoldKey = new GlobalKey();
-  // Key open = ValueKey(false);
   int level;
   TextEditingController _request = new TextEditingController();
   TextEditingController _new = new TextEditingController();
@@ -32,15 +31,29 @@ class _ClubPageState extends State<ClubPage> {
   List<File> _images = List();
   List<String> _types = ["공개","동아리"].toList();
   String type = "공개";
-  int load = 20;
   String text = "새로운 글쓰기";
   bool open = false;
+  ScrollController _scrollController = ScrollController();
+  int _load =20;
   DocumentSnapshot club;
   _ClubPageState({Key key, @required this.club})
     : assert(club != null);
   @override
   void initState() {
     super.initState();
+    _scrollController.addListener((){
+      if(_scrollController.position.pixels == _scrollController.position.maxScrollExtent){
+        _getMoreData();
+      }
+    });
+    _scrollController.addListener((){
+      if(_scrollController.position.pixels == _scrollController.position.minScrollExtent){
+        // print(_load);
+        setState(() {
+          _load = 20;
+        });
+      }
+    });
     level = cu.currentUser.club.getLevel();
   }
   @override
@@ -49,7 +62,16 @@ class _ClubPageState extends State<ClubPage> {
     _request.dispose();
     _new.dispose();
     cu.currentUser.club.exit();
+    _scrollController.dispose();
     super.dispose();
+  }
+
+  _getMoreData() {
+    // print(_load);
+    setState(() {
+      if(_load<10000)
+      _load += 20;
+    });
   }
 
   Future getImage() async {
@@ -573,6 +595,7 @@ class _ClubPageState extends State<ClubPage> {
             child: Image.asset('assets/logo/logo1.png',fit: BoxFit.contain,color:Theme.of(context).primaryColor,)
           ),
           NestedScrollView(
+            controller: _scrollController,
             headerSliverBuilder: (BuildContext context, bool innerBoxIsScrolled) {
               return <Widget>[
                 SliverAppBar(
@@ -627,7 +650,7 @@ class _ClubPageState extends State<ClubPage> {
                   ),
                 ),
                 StreamBuilder<QuerySnapshot>(
-                  stream: Firestore.instance.collection('clubs').document(club.documentID).collection('Board').where("head.type", isLessThanOrEqualTo: level).limit(50).snapshots(),
+                  stream: Firestore.instance.collection('clubs').document(club.documentID).collection('Board').where("head.type", isLessThanOrEqualTo: level).limit(_load).snapshots(),
                   builder: (context, snapshot) {
                     if (!snapshot.hasData) return LinearProgressIndicator();
                     return Column(
@@ -835,7 +858,7 @@ class _ClubPageState extends State<ClubPage> {
                   )
                 ),
                 StreamBuilder<QuerySnapshot>(
-                  stream: Firestore.instance.collection('clubs').document(club.documentID).collection('Board').orderBy("head.date", descending: true).limit(load).snapshots(),
+                  stream: Firestore.instance.collection('clubs').document(club.documentID).collection('Board').orderBy("head.date", descending: true).limit(_load).snapshots(),
                   builder: (context, snapshot) {
                     if (!snapshot.hasData) return LinearProgressIndicator();
                     return Column(
@@ -843,16 +866,16 @@ class _ClubPageState extends State<ClubPage> {
                     );
                   },
                 ),
-                Card(
-                  child: IconButton(
-                    icon: Icon(Icons.refresh),
-                    onPressed: (){
-                      setState(() {
-                        load +=10;
-                      });
-                    },
-                  ),
-                ),
+                // Card(
+                //   child: IconButton(
+                //     icon: Icon(Icons.refresh),
+                //     onPressed: (){
+                //       setState(() {
+                //         load +=10;
+                //       });
+                //     },
+                //   ),
+                // ),
               ],
             ),
           ),

@@ -10,6 +10,49 @@ class HomePage extends StatefulWidget {
 
 class _HomePageState extends State<HomePage> {
   final GlobalKey<ScaffoldState> _scaffoldKey = new GlobalKey();
+  ScrollController _scrollController = ScrollController();
+  ScrollController _scrollController2 = ScrollController();
+  int _load =20;
+  int _load2 =20;
+  void initState() { 
+    super.initState();
+    _scrollController.addListener((){
+      if(_scrollController.position.pixels == _scrollController.position.maxScrollExtent){
+        setState(() {
+          if(_load<10000)
+          _load += 20;
+        });
+      }
+    });
+    _scrollController2.addListener((){
+      if(_scrollController2.position.pixels == _scrollController2.position.maxScrollExtent){
+        setState(() {
+          if(_load2<10000)
+          _load2 += 20;
+        });
+      }
+    });
+    _scrollController.addListener((){
+      if(_scrollController.position.pixels == _scrollController.position.minScrollExtent){
+        setState(() {
+          _load = 20;
+        });
+      }
+    });
+    _scrollController2.addListener((){
+      if(_scrollController2.position.pixels == _scrollController2.position.minScrollExtent){
+        setState(() {
+          _load2 = 20;
+        });
+      }
+    });
+  }
+  @override
+  void dispose() { 
+    _scrollController.dispose();
+    _scrollController2.dispose();
+    super.dispose();
+  }
   Future<Null> _clicked(DocumentSnapshot data) async {
     return showDialog<Null>(
       context: context,
@@ -145,21 +188,22 @@ class _HomePageState extends State<HomePage> {
         body: TabBarView(
           children: <Widget>[
             StreamBuilder<QuerySnapshot>(
-              stream: Firestore.instance.collection('clubs').snapshots(),
+              stream: Firestore.instance.collection('clubs').limit(_load).snapshots(),
               builder: (context, snapshot) {
                 if (!snapshot.hasData) return LinearProgressIndicator();
-
                 return ListView(
+                  controller: _scrollController,
                   padding: const EdgeInsets.only(top: 16.0),
                   children: snapshot.data.documents.map((data) => _buildListItem(context, data,0)).toList(),
                 );
               },
             ),
             StreamBuilder<QuerySnapshot>(
-              stream: Firestore.instance.collection('users').document(cu.currentUser.getUid()).collection('clubs').snapshots(),
+              stream: Firestore.instance.collection('users').document(cu.currentUser.getUid()).collection('clubs').limit(_load2).snapshots(),
               builder: (context, snapshot) {
                 if (!snapshot.hasData) return LinearProgressIndicator();
                 return ListView(
+                  controller: _scrollController2,
                   padding: const EdgeInsets.only(top: 16.0),
                   children: snapshot.data.documents.map((data) => _buildListItem(context, data,1)).toList(),
                 );

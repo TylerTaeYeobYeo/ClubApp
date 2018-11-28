@@ -211,7 +211,7 @@ class _NewClubPageState extends State<NewClubPage> {
                               String id = Uuid().v1();
                               String image;
                               if(_image != null){
-                                StorageUploadTask uploadTask = FirebaseStorage.instance.ref().child('clubs/background/$id').putFile(_image);
+                                StorageUploadTask uploadTask = FirebaseStorage.instance.ref().child('club/$id/background').putFile(_image);
                                 image = await (await uploadTask.onComplete).ref.getDownloadURL();
                               }
                               else image = "http://image.sportsseoul.com/2018/01/02/news/2018010201000018800000491.jpg";

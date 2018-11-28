@@ -176,7 +176,7 @@ class _FixPageState extends State<FixPage> {
                             Navigator.pop(context);
                             String image;
                             if(_image != null){
-                              StorageUploadTask uploadTask = FirebaseStorage.instance.ref().child('clubs/background/${club.documentID}').putFile(_image);
+                              StorageUploadTask uploadTask = FirebaseStorage.instance.ref().child('club/${club.documentID}}/background').putFile(_image);
                               image = await (await uploadTask.onComplete).ref.getDownloadURL();
                             }
                             else image = club.data['image'];

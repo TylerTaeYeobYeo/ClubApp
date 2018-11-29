@@ -28,7 +28,7 @@ class _CreateDataPageState extends State<CreateDataPage> {
     : assert(club != null);
   TextEditingController _name = TextEditingController();
   TextEditingController _description = TextEditingController();
-  TextEditingController _fileNameController = TextEditingController();
+  // TextEditingController _fileNameController = TextEditingController();
   List<String> _types = ["인수인계","활동일지","회계"].toList();
   String selected = "";
   File upload;
@@ -43,7 +43,7 @@ class _CreateDataPageState extends State<CreateDataPage> {
     upload.delete();
     _name.dispose();
     _description.dispose();
-    _fileNameController.dispose();
+    // _fileNameController.dispose();
     super.dispose();
   }
 
@@ -71,20 +71,22 @@ class _CreateDataPageState extends State<CreateDataPage> {
             child: Text("업로드"),
             onPressed: ()async{
               if(upload != null){
-                if(_fileNameController.text != ""){
+                // if(_fileNameController.text != ""){
                   Navigator.pop(context);
-                  StorageUploadTask uploadTask = FirebaseStorage.instance.ref().child('club/${club.documentID}/run/$index/${_fileNameController.text}').putFile(upload);
+                  StorageUploadTask uploadTask = FirebaseStorage.instance.ref().child('club/${club.documentID}/run/$index/${_name.text}').putFile(upload);
                   String url = await (await uploadTask.onComplete).ref.getDownloadURL();
                   Firestore.instance.collection('clubs').document(club.documentID).collection('run').add({
                     "writer": cu.currentUser.getDisplayName(),
                     "uid": cu.currentUser.getUid(),
+                    "photoUrl": cu.currentUser.getphotoUrl(),
                     "title": _name.text,
+                    "created": DateTime.now(),
                     "description":_description.text,
                     "type": index,
-                    "fileName": _fileNameController.text,
+                    "fileName": _name.text,
                     "file": url,
                   });
-                }
+                // }
               }
               else{
                 showDialog(
@@ -109,10 +111,9 @@ class _CreateDataPageState extends State<CreateDataPage> {
               title: TextField(
                 controller: _name,
                 keyboardType: TextInputType.multiline,
-                maxLength: 20,
                 decoration: InputDecoration(
-                  hintText: "ex) 회장 인수인계",
-                  helperText: "20자 이내로 작성해 주세요"
+                  hintText: "ex) 회장 인수인계\n",
+                  helperText: "업로드할 파일의 이름이 됩니다."
                 ),
               ),
               trailing: DropdownButton(
@@ -130,7 +131,18 @@ class _CreateDataPageState extends State<CreateDataPage> {
                 ], 
                 onChanged: (value) {
                   setState(() {
-                    selected = value;  
+                    selected = value;
+                    switch(selected){
+                      case "인수인계":
+                        index = 0;
+                        break;
+                      case "활동일지":
+                      index = 1;
+                      break;
+                      case "회계":
+                      index=2;
+                      break;
+                    }
                   });
                 },
               ),
@@ -146,7 +158,7 @@ class _CreateDataPageState extends State<CreateDataPage> {
                   keyboardType: TextInputType.multiline,
                   maxLines: 5,
                   decoration: InputDecoration(
-                    hintText: "ex) 1번째 파일은 학부제출 서류\n       2번째 파일은 동아리제출 서류",
+                    hintText: "ex) 회장 인수인계에 대한 자세한 설명이 되어있다.",
                   ),
                 ),
               )
@@ -161,13 +173,14 @@ class _CreateDataPageState extends State<CreateDataPage> {
                 upload==null?SizedBox():
                 ListTile(
                   leading: Icon(Icons.file_upload),
-                  title: TextField(
-                    controller: _fileNameController,
-                    decoration: InputDecoration(
-                      hintText: "ex) 2018-2 결산",
-                      helperText: "파일이름을 입력해주세요"
-                    ),
-                  ),
+                  title: Text(_name.text + ".pdf"),
+                  // TextField(
+                  //   controller: _fileNameController,
+                  //   decoration: InputDecoration(
+                  //     hintText: "ex) 2018-2 결산",
+                  //     helperText: "파일이름을 입력해주세요"
+                  //   ),
+                  // ),
                   trailing: IconButton(
                     icon: Icon(Icons.close),
                     onPressed: (){

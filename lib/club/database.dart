@@ -6,9 +6,21 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_storage/firebase_storage.dart';
+import 'package:intl/intl.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:project_club2/club/newRDB.dart';
 import 'package:dio/dio.dart';
+
+class Search{
+  TextEditingController _search = TextEditingController();
+  Stream<QuerySnapshot> term;
+  String strSearch = "a";
+  int strlength;
+  var strFrontCode;
+  String strEndCode;
+  String startcode;
+  String endcode;
+}
 
 class DatabasePage extends StatefulWidget {
   final DocumentSnapshot data;
@@ -26,9 +38,21 @@ class _DatabasePageState extends State<DatabasePage> with SingleTickerProviderSt
   bool downloading = false;
   bool loadingScreen = false;
   var progressString = "";
-
+  TextEditingController _description =TextEditingController();
   _DatabasePageState({Key key, @required this.club})
     : assert(club != null);
+
+  Search first = Search();
+  Search second = Search();
+  Search third = Search();
+  // TextEditingController _search = TextEditingController();
+  // Stream<QuerySnapshot> term;
+  // String strSearch = "a";
+  // int strlength;
+  // var strFrontCode;
+  // String strEndCode;
+  // String startcode;
+  // String endcode;
 
   ScrollController _scrollController = ScrollController();
   ScrollController _scrollController2 = ScrollController();
@@ -38,6 +62,9 @@ class _DatabasePageState extends State<DatabasePage> with SingleTickerProviderSt
   int _load3 =20;
   @override
   void initState() {
+    first.term = Firestore.instance.collection('clubs').document(club.documentID).collection('run').where("type", isEqualTo: 0).limit(_load).snapshots();
+    second.term = Firestore.instance.collection('clubs').document(club.documentID).collection('run').where("type", isEqualTo: 1).limit(_load2).snapshots();
+    third.term = Firestore.instance.collection('clubs').document(club.documentID).collection('run').where("type", isEqualTo: 2).limit(_load3).snapshots();
     super.initState();
     _tabController = TabController(vsync: this, length: 3);
     _scrollController.addListener((){
@@ -89,7 +116,10 @@ class _DatabasePageState extends State<DatabasePage> with SingleTickerProviderSt
   }
 
   @override
-  void dispose() { 
+  void dispose() {
+    first._search.dispose();
+    second._search.dispose();
+    _description.dispose();
     _tabController.dispose();
     _scrollController.dispose();
     _scrollController2.dispose();
@@ -127,65 +157,154 @@ class _DatabasePageState extends State<DatabasePage> with SingleTickerProviderSt
   Card returnCard(DocumentSnapshot doc){
     return Card(
       key: ValueKey(doc.documentID),
-      child: ExpansionTile(
-        title: Text(doc.data['title']),
-        // leading: Text(doc.data['writer']),
+      child: Column(
         children: <Widget>[
-          // ListTile(
-          //   leading: Text("작성자"),
-          //   title: Text(doc.data['writer']),
-          // ),
           ListTile(
-            leading: Text("설명"),
-            title: Text(doc.data['description']),
-          ),
-          ListTile(
-            leading: Text("파일"),
-            title: Text(doc.data['fileName']),
-            trailing: IconButton(
-              icon: Icon(Icons.file_download),
-              onPressed: ()=>
-                _downloadFile(doc.data['file'],doc.data['fileName'])
-              ,
+            leading: CircleAvatar(
+              backgroundImage: NetworkImage(doc.data['photoUrl']),
             ),
+            title: Text(doc.data['writer']),
+            subtitle: Text(DateFormat.yMd().add_jm().format(doc.data['created'])),
+            trailing: PopupMenuButton(
+              icon: Icon(Icons.more_vert), 
+              itemBuilder: (BuildContext context) {
+                return [
+                  PopupMenuItem(
+                    value: "수정",
+                    child: Text("수정"),
+                  ),
+                  PopupMenuItem(
+                    value: "삭제",
+                    child: Text("삭제"),
+                  ),
+                ];
+              },
+              onSelected: (s){
+                _description.text = doc.data['description'];
+                switch(s){
+                  case "수정":
+                    showDialog(
+                      context: context,
+                      builder: (context){
+                        return AlertDialog(
+                          title: Text("설명 수정"),
+                          content: TextField(
+                            controller: _description,
+                            maxLines: 4,
+                            decoration: InputDecoration(
+                              hintText: "",
+                              helperText: "파일에 대해 구체저으로 적어주세요"
+                            ),
+                          ),
+                          actions: <Widget>[
+                            RaisedButton(
+                              child: Text("확인", style: TextStyle(color: Colors.white),),
+                              color: Theme.of(context).primaryColor,
+                              onPressed: (){
+                                Navigator.pop(context);
+                                Firestore.instance.collection('clubs').document(club.documentID).collection('run').document(doc.documentID).updateData({
+                                  "description": _description.text
+                                });
+                              },
+                            ),
+                            FlatButton(
+                              child: Text("취소", style:TextStyle(color: Theme.of(context).primaryColor)),
+                              onPressed: (){
+                                Navigator.pop(context);
+                              },
+                            )
+                          ],
+                        );
+                      }
+                    );
+                    break;
+                  case "삭제":
+                    showDialog(
+                      context: context,
+                      builder: (context){
+                        return AlertDialog(
+                          title: Text("게시물 삭제"),
+                          content: Text("삭제된 게시물은 복구 할 수 없습니다."),
+                          actions: <Widget>[
+                            RaisedButton(
+                              child: Text("삭제", style: TextStyle(color: Colors.white),),
+                              color: Colors.red,
+                              onPressed: (){
+                                Navigator.pop(context);
+                                FirebaseStorage.instance.ref().child('club/${club.documentID}/run/${_tabController.index}/${doc.data['fileName']}').delete();
+                                Firestore.instance.collection('clubs').document(club.documentID).collection('run').document(doc.documentID).delete();
+                              },
+                            ),
+                            FlatButton(
+                              child: Text("취소", style:TextStyle(color: Colors.red)),
+                              onPressed: (){
+                                Navigator.pop(context);
+                              },
+                            )
+                          ],
+                        );
+                      }
+                    );
+                    break;
+                }
+              },
+            ),
+          ),
+          Divider(),
+          ListTile(
+            leading: Icon(Icons.description),
+            title: Text(doc.data['fileName']+".pdf"),
+            // trailing: IconButton(
+            //   icon: Icon(Icons.file_download),
+            //   onPressed: (){},
+            // ),
+          ),
+          Divider(),
+          ListTile(
+            title: Text(doc.data['description']),
           ),
           ButtonBar(
             children: <Widget>[
               FlatButton(
-                child: Text("삭제", style:TextStyle(
-                  color: Colors.red
-                )),
-                onPressed: ()=>showDialog(
-                  context: context,
-                  builder: (context){
-                    return AlertDialog(
-                      title: Text("게시물 삭제"),
-                      content: Text("삭제된 게시물은 복구 할 수 없습니다."),
-                      actions: <Widget>[
-                        RaisedButton(
-                          child: Text("삭제", style: TextStyle(color: Colors.white),),
-                          color: Colors.red,
-                          onPressed: (){
-                            Navigator.pop(context);
-                            FirebaseStorage.instance.ref().child('club/${club.documentID}/run/${_tabController.index}/${doc.data['fileName']}').delete();
-                            Firestore.instance.collection('clubs').document(club.documentID).collection('run').document(doc.documentID).delete();
-                          },
-                        ),
-                        FlatButton(
-                          child: Text("취소", style:TextStyle(color: Colors.red)),
-                          onPressed: (){
-                            Navigator.pop(context);
-                          },
-                        )
-                      ],
-                    );
-                  }
-                ),
+                child: Text("삭제",style: TextStyle(color: Colors.red),),
+                onPressed: (){
+                  showDialog(
+                    context: context,
+                    builder: (context){
+                      return AlertDialog(
+                        title: Text("게시물 삭제"),
+                        content: Text("삭제된 게시물은 복구 할 수 없습니다."),
+                        actions: <Widget>[
+                          RaisedButton(
+                            child: Text("삭제", style: TextStyle(color: Colors.white),),
+                            color: Colors.red,
+                            onPressed: (){
+                              Navigator.pop(context);
+                              FirebaseStorage.instance.ref().child('club/${club.documentID}/run/${_tabController.index}/${doc.data['fileName']}').delete();
+                              Firestore.instance.collection('clubs').document(club.documentID).collection('run').document(doc.documentID).delete();
+                            },
+                          ),
+                          FlatButton(
+                            child: Text("취소", style:TextStyle(color: Colors.red)),
+                            onPressed: (){
+                              Navigator.pop(context);
+                            },
+                          )
+                        ],
+                      );
+                    }
+                  );
+                },
               ),
+              RaisedButton(
+                child: Text("다운로드",style: TextStyle(color: Colors.white ),),
+                color: Theme.of(context).primaryColor,
+                onPressed: ()=>_downloadFile(doc.data['file'],doc.data['fileName']),
+              )
             ],
           )
         ],
-      ),
+      )
     );
   }
 
@@ -222,41 +341,179 @@ class _DatabasePageState extends State<DatabasePage> with SingleTickerProviderSt
           TabBarView(
             controller: _tabController,
             children: <Widget>[
-              StreamBuilder<QuerySnapshot>(
-                stream: Firestore.instance.collection('clubs').document(club.documentID).collection('run').where("type", isEqualTo: 0).limit(_load).snapshots(),
-                builder: (context,snapshots){
-                  if(!snapshots.hasData)return LinearProgressIndicator();
-                  return ListView(
-                    controller: _scrollController,
-                    children: snapshots.data.documents.map((doc){
-                      return returnCard(doc);
-                    }).toList(),
-                  );
-                },
+              ListView(
+                controller: _scrollController,
+                children: <Widget>[
+                  Card(
+                    child: ListTile(
+                      leading: Text("검색"),
+                      title: TextField(
+                        controller: first._search,
+                        maxLength: 30,
+                        onChanged: (s){
+                          setState(() {
+                            if(first._search.text =="") first.term = Firestore.instance.collection('clubs').document(club.documentID).collection('run').where("type", isEqualTo: 0).limit(_load).snapshots();
+                            else {
+                              _load = 20;
+                              first.term = Firestore.instance.collection('clubs').document(club.documentID).collection('run').where("title", isGreaterThanOrEqualTo: first.startcode).where("title", isLessThan: first.endcode).where("type", isEqualTo: 0).orderBy("title").limit(_load).snapshots();
+                              first.strSearch = first._search.text;
+                              first.strlength = first.strSearch.length;
+                              first.strFrontCode = first.strSearch.substring(0, first.strlength-1);
+                              first.strEndCode = first.strSearch.substring(first.strlength-1, first.strSearch.length);
+                              first.startcode = first.strSearch;
+                              first.endcode= first.strFrontCode + String.fromCharCode(first.strEndCode.codeUnitAt(0) + 1);
+                            }
+                          });
+                        },
+                      ),
+                      trailing: IconButton(
+                        icon: Icon(Icons.search),
+                        onPressed: (){
+                          setState(() {
+                            if(first._search.text =="") first.term = Firestore.instance.collection('clubs').document(club.documentID).collection('run').where("type", isEqualTo: 0).limit(_load).snapshots();
+                            else {
+                              _load = 20;
+                              first.term = Firestore.instance.collection('clubs').document(club.documentID).collection('run').where("title", isGreaterThanOrEqualTo: first.startcode).where("title", isLessThan: first.endcode).where("type", isEqualTo: 0).orderBy("title").limit(_load).snapshots();
+                              first.strSearch = first._search.text;
+                              first.strlength = first.strSearch.length;
+                              first.strFrontCode = first.strSearch.substring(0, first.strlength-1);
+                              first.strEndCode = first.strSearch.substring(first.strlength-1, first.strSearch.length);
+                              first.startcode = first.strSearch;
+                              first.endcode= first.strFrontCode + String.fromCharCode(first.strEndCode.codeUnitAt(0) + 1);
+                            }
+                          });
+                        },
+                      ),
+                    ),
+                  ),
+                  StreamBuilder<QuerySnapshot>(
+                    stream: first.term,
+                    builder: (context,snapshots){
+                      if(!snapshots.hasData)return LinearProgressIndicator();
+                      return Column(
+                        children: snapshots.data.documents.map((doc){
+                          return returnCard(doc);
+                        }).toList(),
+                      );
+                    },
+                  )
+                ],
               ),
-              StreamBuilder<QuerySnapshot>(
-                stream: Firestore.instance.collection('clubs').document(club.documentID).collection('run').where("type", isEqualTo: 1).limit(_load2).snapshots(),
-                builder: (context,snapshots){
-                  if(!snapshots.hasData)return LinearProgressIndicator();
-                  return ListView(
-                    controller: _scrollController2,
-                    children: snapshots.data.documents.map((doc){
-                      return returnCard(doc);
-                    }).toList(),
-                  );
-                },
+              ListView(
+                controller: _scrollController2,
+                children: <Widget>[
+                  Card(
+                    child: ListTile(
+                      leading: Text("검색"),
+                      title: TextField(
+                        controller: second._search,
+                        maxLength: 30,
+                        onChanged: (s){
+                          setState(() {
+                            if(second._search.text =="") second.term = Firestore.instance.collection('clubs').document(club.documentID).collection('run').where("type", isEqualTo: 1).limit(_load2).snapshots();
+                            else {
+                              _load2 = 20;
+                              second.term = Firestore.instance.collection('clubs').document(club.documentID).collection('run').where("title", isGreaterThanOrEqualTo: second.startcode).where("title", isLessThan: second.endcode).where("type", isEqualTo: 1).orderBy("title").limit(_load2).snapshots();
+                              second.strSearch = second._search.text;
+                              second.strlength = second.strSearch.length;
+                              second.strFrontCode = second.strSearch.substring(0, second.strlength-1);
+                              second.strEndCode = second.strSearch.substring(second.strlength-1, second.strSearch.length);
+                              second.startcode = second.strSearch;
+                              second.endcode= second.strFrontCode + String.fromCharCode(second.strEndCode.codeUnitAt(0) + 1);
+                            }
+                          });
+                        },
+                      ),
+                      trailing: IconButton(
+                        icon: Icon(Icons.search),
+                        onPressed: (){
+                          setState(() {
+                            if(second._search.text =="") second.term = Firestore.instance.collection('clubs').document(club.documentID).collection('run').where("type", isEqualTo: 1).limit(_load2).snapshots();
+                            else {
+                              _load2 = 20;
+                              second.term = Firestore.instance.collection('clubs').document(club.documentID).collection('run').where("title", isGreaterThanOrEqualTo: second.startcode).where("title", isLessThan: second.endcode).where("type", isEqualTo: 1).orderBy("title").limit(_load2).snapshots();
+                              second.strSearch = second._search.text;
+                              second.strlength = second.strSearch.length;
+                              second.strFrontCode = second.strSearch.substring(0, second.strlength-1);
+                              second.strEndCode = second.strSearch.substring(second.strlength-1, second.strSearch.length);
+                              second.startcode = second.strSearch;
+                              second.endcode= second.strFrontCode + String.fromCharCode(second.strEndCode.codeUnitAt(0) + 1);
+                            }
+                          });
+                        },
+                      ),
+                    ),
+                  ),
+                  StreamBuilder<QuerySnapshot>(
+                    stream: second.term,
+                    builder: (context,snapshots){
+                      if(!snapshots.hasData)return LinearProgressIndicator();
+                      return Column(
+                        children: snapshots.data.documents.map((doc){
+                          return returnCard(doc);
+                        }).toList(),
+                      );
+                    },
+                  )
+                ],
               ),
-              StreamBuilder<QuerySnapshot>(
-                stream: Firestore.instance.collection('clubs').document(club.documentID).collection('run').where("type", isEqualTo: 2).limit(_load3).snapshots(),
-                builder: (context,snapshots){
-                  if(!snapshots.hasData)return LinearProgressIndicator();
-                  return ListView(
-                    controller: _scrollController3,
-                    children: snapshots.data.documents.map((doc){
-                      return returnCard(doc);
-                    }).toList(),
-                  );
-                },
+              ListView(
+                controller: _scrollController3,
+                children: <Widget>[
+                  Card(
+                    child: ListTile(
+                      leading: Text("검색"),
+                      title: TextField(
+                        controller: third._search,
+                        maxLength: 30,
+                        onChanged: (s){
+                          setState(() {
+                            if(third._search.text =="") third.term = Firestore.instance.collection('clubs').document(club.documentID).collection('run').where("type", isEqualTo: 2).limit(_load3).snapshots();
+                            else {
+                              _load3 = 20;
+                              third.term = Firestore.instance.collection('clubs').document(club.documentID).collection('run').where("title", isGreaterThanOrEqualTo: third.startcode).where("title", isLessThan: third.endcode).where("type", isEqualTo: 2).orderBy("title").limit(_load3).snapshots();
+                              third.strSearch = third._search.text;
+                              third.strlength = third.strSearch.length;
+                              third.strFrontCode = third.strSearch.substring(0, third.strlength-1);
+                              third.strEndCode = third.strSearch.substring(third.strlength-1, third.strSearch.length);
+                              third.startcode = third.strSearch;
+                              third.endcode= third.strFrontCode + String.fromCharCode(third.strEndCode.codeUnitAt(0) + 1);
+                            }
+                          });
+                        },
+                      ),
+                      trailing: IconButton(
+                        icon: Icon(Icons.search),
+                        onPressed: (){
+                          setState(() {
+                            if(third._search.text =="") third.term = Firestore.instance.collection('clubs').document(club.documentID).collection('run').where("type", isEqualTo: 2).limit(_load3).snapshots();
+                            else {
+                              _load3 = 20;
+                              third.term = Firestore.instance.collection('clubs').document(club.documentID).collection('run').where("title", isGreaterThanOrEqualTo: third.startcode).where("title", isLessThan: third.endcode).where("type", isEqualTo: 2).orderBy("title").limit(_load3).snapshots();
+                              third.strSearch = third._search.text;
+                              third.strlength = third.strSearch.length;
+                              third.strFrontCode = third.strSearch.substring(0, third.strlength-1);
+                              third.strEndCode = third.strSearch.substring(third.strlength-1, third.strSearch.length);
+                              third.startcode = third.strSearch;
+                              third.endcode= third.strFrontCode + String.fromCharCode(third.strEndCode.codeUnitAt(0) + 1);
+                            }
+                          });
+                        },
+                      ),
+                    ),
+                  ),
+                  StreamBuilder<QuerySnapshot>(
+                    stream: third.term,
+                    builder: (context,snapshots){
+                      if(!snapshots.hasData)return LinearProgressIndicator();
+                      return Column(
+                        children: snapshots.data.documents.map((doc){
+                          return returnCard(doc);
+                        }).toList(),
+                      );
+                    },
+                  )
+                ],
               ),
             ],
           ),

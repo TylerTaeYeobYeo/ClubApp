@@ -12,6 +12,8 @@ import 'package:project_club2/club/database.dart';
 import 'package:project_club2/club/detail.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:uuid/uuid.dart';
+import 'package:project_club2/club/share.dart';
+
 
 class ClubPage extends StatefulWidget {
   final DocumentSnapshot data;
@@ -329,6 +331,13 @@ class _ClubPageState extends State<ClubPage> {
             ListTile(
               leading: Icon(Icons.folder),
               title: Text("공유자료"),
+              onTap: (){
+                Navigator.push(context, 
+                  MaterialPageRoute(
+                    builder: (context) => ShareFilePage(club: club),
+                  )
+                );
+              },
             ),
             ListTile(
               leading: Icon(Icons.call),
@@ -579,7 +588,6 @@ class _ClubPageState extends State<ClubPage> {
   @override
   Widget build(BuildContext context) {
     final dropdownMenuOptions = _types
-
       .map((String item) =>
         new DropdownMenuItem<String>(value: item, child: new Text(item))
       )

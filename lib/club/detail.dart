@@ -91,9 +91,10 @@ class _DetailClubPageState extends State<DetailClubPage> {
         headerSliverBuilder: (BuildContext context, bool innerBoxIsScrolled) {
           return [
             SliverAppBar(
+              title: Text("Detail"),
               floating: true,
               snap: true,
-              backgroundColor: Colors.white,
+              // backgroundColor: Colors.white,
               leading: edit?IconButton(
                   icon: Icon(Icons.cancel),
                   onPressed: (){

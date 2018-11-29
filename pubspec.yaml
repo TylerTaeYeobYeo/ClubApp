@@ -45,3 +45,4 @@ flutter:
     - assets/logo/github.png
     - assets/logo/kakaotalk.png
     - assets/logo/twitter.png
+    - assets/color/color.json

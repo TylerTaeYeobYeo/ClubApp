@@ -7,10 +7,6 @@ import 'package:file_picker/file_picker.dart';
 
 import 'package:project_club2/global/currentUser.dart' as cu;
 
-class CustomFile{
-  File file;
-  String name = "";
-}
 
 class CreateDataPage extends StatefulWidget {
   final DocumentSnapshot data;

@@ -37,7 +37,7 @@ class _DatabasePageState extends State<DatabasePage> with SingleTickerProviderSt
   // static var httpClient = new HttpClient();
   bool downloading = false;
   bool loadingScreen = false;
-  var progressString = "";
+  var progressString = "Loading";
   TextEditingController _description =TextEditingController();
   _DatabasePageState({Key key, @required this.club})
     : assert(club != null);
@@ -45,14 +45,6 @@ class _DatabasePageState extends State<DatabasePage> with SingleTickerProviderSt
   Search first = Search();
   Search second = Search();
   Search third = Search();
-  // TextEditingController _search = TextEditingController();
-  // Stream<QuerySnapshot> term;
-  // String strSearch = "a";
-  // int strlength;
-  // var strFrontCode;
-  // String strEndCode;
-  // String startcode;
-  // String endcode;
 
   ScrollController _scrollController = ScrollController();
   ScrollController _scrollController2 = ScrollController();
@@ -128,6 +120,9 @@ class _DatabasePageState extends State<DatabasePage> with SingleTickerProviderSt
   }
   
   void _downloadFile(String url, String filename) async {
+    setState((){
+      downloading = true;
+    });
     Dio dio = Dio();
     var dir = await getExternalStorageDirectory();
     try {
@@ -136,7 +131,7 @@ class _DatabasePageState extends State<DatabasePage> with SingleTickerProviderSt
           // print("Rec: $rec , Total: $total");
 
           setState(() {
-            downloading = true;
+            // downloading = true;
             progressString = ((rec / total) * 100).toStringAsFixed(0) + "%";
           });
         }
@@ -146,12 +141,78 @@ class _DatabasePageState extends State<DatabasePage> with SingleTickerProviderSt
     }
     setState(() {
       downloading = false;
-      progressString = "Completed";
+      progressString = "Loading";
     });
     // print("${dir.path}/Download/$filename.pdf Download completed");
     _scaffoldKey.currentState.showSnackBar(SnackBar(
       content: Text("$filename.pdf"+" 다운로드 완료"),
       duration: Duration(seconds: 1),));
+  }
+
+  void fixFile(DocumentSnapshot doc){
+    showDialog(
+      context: context,
+      builder: (context){
+        return AlertDialog(
+          title: Text("설명 수정"),
+          content: TextField(
+            controller: _description,
+            maxLines: 4,
+            decoration: InputDecoration(
+              hintText: "",
+              helperText: "파일에 대해 구체저으로 적어주세요"
+            ),
+          ),
+          actions: <Widget>[
+            RaisedButton(
+              child: Text("확인", style: TextStyle(color: Colors.white),),
+              color: Theme.of(context).primaryColor,
+              onPressed: (){
+                Navigator.pop(context);
+                Firestore.instance.collection('clubs').document(club.documentID).collection('run').document(doc.documentID).updateData({
+                  "description": _description.text
+                });
+              },
+            ),
+            FlatButton(
+              child: Text("취소", style:TextStyle(color: Theme.of(context).primaryColor)),
+              onPressed: (){
+                Navigator.pop(context);
+              },
+            )
+          ],
+        );
+      }
+    );
+  }
+
+  void deleteFile(DocumentSnapshot doc){
+    showDialog(
+      context: context,
+      builder: (context){
+        return AlertDialog(
+          title: Text("게시물 삭제"),
+          content: Text("삭제된 게시물은 복구 할 수 없습니다."),
+          actions: <Widget>[
+            RaisedButton(
+              child: Text("삭제", style: TextStyle(color: Colors.white),),
+              color: Colors.red,
+              onPressed: (){
+                Navigator.pop(context);
+                FirebaseStorage.instance.ref().child('club/${club.documentID}/run/${_tabController.index}/${doc.data['fileName']}').delete();
+                Firestore.instance.collection('clubs').document(club.documentID).collection('run').document(doc.documentID).delete();
+              },
+            ),
+            FlatButton(
+              child: Text("취소", style:TextStyle(color: Colors.red)),
+              onPressed: (){
+                Navigator.pop(context);
+              },
+            )
+          ],
+        );
+      }
+    );
   }
 
   Card returnCard(DocumentSnapshot doc){
@@ -160,15 +221,17 @@ class _DatabasePageState extends State<DatabasePage> with SingleTickerProviderSt
       child: Column(
         children: <Widget>[
           ListTile(
-            leading: CircleAvatar(
-              backgroundImage: NetworkImage(doc.data['photoUrl']),
-            ),
-            title: Text(doc.data['writer']),
+            leading: Icon(Icons.description),
+            title: Text(doc.data['fileName']+".pdf"),
             subtitle: Text(DateFormat.yMd().add_jm().format(doc.data['created'])),
             trailing: PopupMenuButton(
               icon: Icon(Icons.more_vert), 
               itemBuilder: (BuildContext context) {
                 return [
+                  PopupMenuItem(
+                    value: "다운로드",
+                    child: Text("다운로드"),
+                  ),
                   PopupMenuItem(
                     value: "수정",
                     child: Text("수정"),
@@ -183,126 +246,30 @@ class _DatabasePageState extends State<DatabasePage> with SingleTickerProviderSt
                 _description.text = doc.data['description'];
                 switch(s){
                   case "수정":
-                    showDialog(
-                      context: context,
-                      builder: (context){
-                        return AlertDialog(
-                          title: Text("설명 수정"),
-                          content: TextField(
-                            controller: _description,
-                            maxLines: 4,
-                            decoration: InputDecoration(
-                              hintText: "",
-                              helperText: "파일에 대해 구체저으로 적어주세요"
-                            ),
-                          ),
-                          actions: <Widget>[
-                            RaisedButton(
-                              child: Text("확인", style: TextStyle(color: Colors.white),),
-                              color: Theme.of(context).primaryColor,
-                              onPressed: (){
-                                Navigator.pop(context);
-                                Firestore.instance.collection('clubs').document(club.documentID).collection('run').document(doc.documentID).updateData({
-                                  "description": _description.text
-                                });
-                              },
-                            ),
-                            FlatButton(
-                              child: Text("취소", style:TextStyle(color: Theme.of(context).primaryColor)),
-                              onPressed: (){
-                                Navigator.pop(context);
-                              },
-                            )
-                          ],
-                        );
-                      }
-                    );
+                    fixFile(doc);
                     break;
                   case "삭제":
-                    showDialog(
-                      context: context,
-                      builder: (context){
-                        return AlertDialog(
-                          title: Text("게시물 삭제"),
-                          content: Text("삭제된 게시물은 복구 할 수 없습니다."),
-                          actions: <Widget>[
-                            RaisedButton(
-                              child: Text("삭제", style: TextStyle(color: Colors.white),),
-                              color: Colors.red,
-                              onPressed: (){
-                                Navigator.pop(context);
-                                FirebaseStorage.instance.ref().child('club/${club.documentID}/run/${_tabController.index}/${doc.data['fileName']}').delete();
-                                Firestore.instance.collection('clubs').document(club.documentID).collection('run').document(doc.documentID).delete();
-                              },
-                            ),
-                            FlatButton(
-                              child: Text("취소", style:TextStyle(color: Colors.red)),
-                              onPressed: (){
-                                Navigator.pop(context);
-                              },
-                            )
-                          ],
-                        );
-                      }
-                    );
+                    deleteFile(doc);
                     break;
+                  case "다운로드":
+                    _downloadFile(doc.data['file'],doc.data['fileName']);
+                  break;    
                 }
               },
             ),
+            onTap: ()=>_downloadFile(doc.data['file'],doc.data['fileName']),
           ),
-          Divider(),
-          ListTile(
-            leading: Icon(Icons.description),
-            title: Text(doc.data['fileName']+".pdf"),
-            // trailing: IconButton(
-            //   icon: Icon(Icons.file_download),
-            //   onPressed: (){},
-            // ),
-          ),
-          Divider(),
           ListTile(
             title: Text(doc.data['description']),
           ),
-          ButtonBar(
-            children: <Widget>[
-              FlatButton(
-                child: Text("삭제",style: TextStyle(color: Colors.red),),
-                onPressed: (){
-                  showDialog(
-                    context: context,
-                    builder: (context){
-                      return AlertDialog(
-                        title: Text("게시물 삭제"),
-                        content: Text("삭제된 게시물은 복구 할 수 없습니다."),
-                        actions: <Widget>[
-                          RaisedButton(
-                            child: Text("삭제", style: TextStyle(color: Colors.white),),
-                            color: Colors.red,
-                            onPressed: (){
-                              Navigator.pop(context);
-                              FirebaseStorage.instance.ref().child('club/${club.documentID}/run/${_tabController.index}/${doc.data['fileName']}').delete();
-                              Firestore.instance.collection('clubs').document(club.documentID).collection('run').document(doc.documentID).delete();
-                            },
-                          ),
-                          FlatButton(
-                            child: Text("취소", style:TextStyle(color: Colors.red)),
-                            onPressed: (){
-                              Navigator.pop(context);
-                            },
-                          )
-                        ],
-                      );
-                    }
-                  );
-                },
-              ),
-              RaisedButton(
-                child: Text("다운로드",style: TextStyle(color: Colors.white ),),
-                color: Theme.of(context).primaryColor,
-                onPressed: ()=>_downloadFile(doc.data['file'],doc.data['fileName']),
-              )
-            ],
-          )
+          Divider(),
+          ListTile(
+            leading: CircleAvatar(
+              backgroundImage: NetworkImage(doc.data['photoUrl']),
+            ),
+            title: Text(doc.data['writer']),
+            subtitle: Text("작성자"),
+          ),
         ],
       )
     );

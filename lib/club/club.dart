@@ -332,6 +332,7 @@ class _ClubPageState extends State<ClubPage> {
               leading: Icon(Icons.folder),
               title: Text("공유자료"),
               onTap: (){
+                Navigator.pop(context);
                 Navigator.push(context, 
                   MaterialPageRoute(
                     builder: (context) => ShareFilePage(club: club),

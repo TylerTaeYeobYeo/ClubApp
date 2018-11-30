@@ -226,7 +226,6 @@ class _PersonalPageState extends State<PersonalPage> {
                         )
                       ],
                     ),
-                    Divider(),
                     ExpansionTile(
                       // initiallyExpanded: true,
                       title: Text("로그인정보"),

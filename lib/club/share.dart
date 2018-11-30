@@ -5,6 +5,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:intl/intl.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:project_club2/club/newShare.dart';
+import 'package:project_club2/global/currentUser.dart' as cu;
 
 class Search{
   TextEditingController _search = TextEditingController();
@@ -83,10 +84,6 @@ class _ShareFilePageState extends State<ShareFilePage> {
                     value: "수정",
                     child: Text("수정"),
                   ),
-                  PopupMenuItem(
-                    value: "삭제",
-                    child: Text("삭제"),
-                  ),
                 ];
               },
               onSelected: (s){
@@ -94,9 +91,6 @@ class _ShareFilePageState extends State<ShareFilePage> {
                 switch(s){
                   case "수정":
                     fixFile(doc);
-                    break;
-                  case "삭제":
-                    deleteFile(doc);
                     break;
                   case "다운로드":
                     _downloadFile(doc.data['file'],doc.data['fileName']);
@@ -116,6 +110,11 @@ class _ShareFilePageState extends State<ShareFilePage> {
             ),
             title: Text(doc.data['writer']),
             subtitle: Text("작성자"),
+            trailing: (doc.data['uid']==cu.currentUser.getUid||cu.currentUser.club.getLevel()==3)?IconButton(
+              icon: Icon(Icons.delete),
+              color: Theme.of(context).primaryColor,
+              onPressed: ()=>deleteFile(doc),
+            ):SizedBox(),
           ),
         ],
       )

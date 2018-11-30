@@ -65,7 +65,7 @@ class _NewClubPageState extends State<NewClubPage> {
                     return AlertDialog(
                       title: ListTile(
                         leading: CircleAvatar(
-                          backgroundImage: _image!=null?FileImage(_image):NetworkImage("http://image.sportsseoul.com/2018/01/02/news/2018010201000018800000491.jpg"),
+                          backgroundImage: _image!=null?FileImage(_image):AssetImage('assets/images/default.jpg'),
                         ),
                         title: Text(_name.text),
                       ),
@@ -94,7 +94,7 @@ class _NewClubPageState extends State<NewClubPage> {
                             ExpansionTile(
                               title: Text("배경이미지"),
                               children: <Widget>[
-                                _image!=null?Image.file(_image):Image.network("http://image.sportsseoul.com/2018/01/02/news/2018010201000018800000491.jpg"),
+                                _image!=null?Image.file(_image):Image.asset('assets/images/default.jpg'),
                               ],
                             ),
                             ExpansionTile(
@@ -186,7 +186,7 @@ class _NewClubPageState extends State<NewClubPage> {
                                   return SimpleDialog(
                                     title: ListTile(
                                       leading: CircleAvatar(
-                                        backgroundImage: _image!=null?FileImage(_image):NetworkImage("http://image.sportsseoul.com/2018/01/02/news/2018010201000018800000491.jpg"),
+                                        backgroundImage: _image!=null?FileImage(_image):AssetImage("assets/images/default.jpg"),
                                       ),
                                       title: Text("동아리 이름을 입력해주세요"),
                                     ),
@@ -214,7 +214,7 @@ class _NewClubPageState extends State<NewClubPage> {
                                 StorageUploadTask uploadTask = FirebaseStorage.instance.ref().child('club/$id/background').putFile(_image);
                                 image = await (await uploadTask.onComplete).ref.getDownloadURL();
                               }
-                              else image = "http://image.sportsseoul.com/2018/01/02/news/2018010201000018800000491.jpg";
+                              else image = "https://firebasestorage.googleapis.com/v0/b/project-club-94ec2.appspot.com/o/default.jpg?alt=media&token=09e85930-b245-47f6-93aa-eb373804f709";
                               Firestore.instance.runTransaction((Transaction transaction){
                                 Firestore.instance.collection('clubs').document(id).setData({
                                   "id": id,
@@ -268,7 +268,7 @@ class _NewClubPageState extends State<NewClubPage> {
                           ListTile(
                             leading: Text("배경 이미지"),
                             title: Image(
-                              image: _image!=null?FileImage(_image):NetworkImage("http://image.sportsseoul.com/2018/01/02/news/2018010201000018800000491.jpg"),
+                              image: _image!=null?FileImage(_image):AssetImage("assets/images/default.jpg"),
                             ),
                             trailing: IconButton(
                               icon: Icon(Icons.camera_alt),
@@ -359,7 +359,7 @@ class _NewClubPageState extends State<NewClubPage> {
                                   background: Container(
                                     decoration: new BoxDecoration(
                                       image: new DecorationImage(
-                                        image: _image!=null?FileImage(_image):NetworkImage("http://image.sportsseoul.com/2018/01/02/news/2018010201000018800000491.jpg"), 
+                                        image: _image!=null?FileImage(_image):AssetImage("assets/images/default.jpg"), 
                                         fit:BoxFit.cover,
                                       ),
                                     ),
@@ -426,7 +426,7 @@ class _NewClubPageState extends State<NewClubPage> {
                                     // Image.network(data.data['body']['image'][0]),
                                     ListTile(   
                                       leading: CircleAvatar(
-                                        backgroundImage: NetworkImage("https://cdn4.vectorstock.com/i/1000x1000/12/78/businessman-flat-icon-business-and-person-vector-16051278.jpg"),
+                                        backgroundImage: AssetImage("assets/images/sample1.jpg"),
                                       ),
                                       title: Text("작성자"),
                                       subtitle: Text(DateTime.now().toString()),
@@ -440,7 +440,7 @@ class _NewClubPageState extends State<NewClubPage> {
                                               height: 300.0,
                                               width: MediaQuery.of(context).size.width -8,
                                                 child: Image(
-                                                  image: NetworkImage("https://pbs.twimg.com/profile_images/882259118131523585/jckOG2cP_400x400.jpg"),
+                                                  image: AssetImage("assets/images/sample2.jpg"),
                                                   fit: BoxFit.cover,
                                                 ),
                                             ),
@@ -483,7 +483,7 @@ class _NewClubPageState extends State<NewClubPage> {
                                     // Image.network(data.data['body']['image'][0]),
                                     ListTile(   
                                       leading: CircleAvatar(
-                                        backgroundImage: NetworkImage("https://cdn4.vectorstock.com/i/1000x1000/12/78/businessman-flat-icon-business-and-person-vector-16051278.jpg"),
+                                        backgroundImage: AssetImage("assets/images/sample1.jpg"),
                                       ),
                                       title: Text("작성자"),
                                       subtitle: Text(DateTime.now().toString()),
@@ -498,7 +498,7 @@ class _NewClubPageState extends State<NewClubPage> {
                                               height: 300.0,
                                               width: MediaQuery.of(context).size.width/2-8,
                                               child: Image(
-                                                image: NetworkImage("https://mblogthumb-phinf.pstatic.net/MjAxODA2MjJfMTYy/MDAxNTI5NjQzNzM0ODIx.Ra-EGOhq4KwWy9zB3R2rvr1bYlxixyxjJ34_Utkj2FQg.dFRtyS7ThwnIlFkaBV5SOnP0XC6DhorWyOdaTM2f-4cg.PNG.loveyourstyle/78180_65744_464.png?type=w800"),
+                                                image: AssetImage("assets/images/sample3.jpg"),
                                                 fit: BoxFit.cover,
                                               ),
                                             ),
@@ -512,7 +512,7 @@ class _NewClubPageState extends State<NewClubPage> {
                                               height: 300.0,
                                               width: MediaQuery.of(context).size.width/2-8,
                                               child: Image(
-                                                image: NetworkImage("http://image.chosun.com/sitedata/image/201803/24/2018032401273_0.jpg"),
+                                                image: AssetImage("assets/images/sample4.jpg"),
                                                 fit: BoxFit.cover,
                                               ),
                                             ),
@@ -557,7 +557,7 @@ class _NewClubPageState extends State<NewClubPage> {
                                     // Image.network(data.data['body']['image'][0]),
                                     ListTile(   
                                       leading: CircleAvatar(
-                                        backgroundImage: NetworkImage("https://cdn4.vectorstock.com/i/1000x1000/12/78/businessman-flat-icon-business-and-person-vector-16051278.jpg"),
+                                        backgroundImage: AssetImage("assets/images/sample1.jpg"),
                                       ),
                                       title: Text("작성자"),
                                       subtitle: Text(DateTime.now().toString()),
@@ -572,7 +572,7 @@ class _NewClubPageState extends State<NewClubPage> {
                                               height: 300.0,
                                               width: MediaQuery.of(context).size.width*2/3-8,
                                               child: Image(
-                                                image: NetworkImage("http://thestar.chosun.com/site/data/img_dir/2017/04/10/2017041001453_0.jpg"),
+                                                image: AssetImage("assets/images/sample5.jpg"),
                                                 fit: BoxFit.cover,
                                               ),
                                             ),
@@ -587,7 +587,7 @@ class _NewClubPageState extends State<NewClubPage> {
                                                   height: 150.0,
                                                   width: MediaQuery.of(context).size.width/3-8,
                                                   child: Image(
-                                                    image: NetworkImage("http://cphoto.asiae.co.kr/listimglink/1/2018021616064428389_1518764804.jpg"),
+                                                    image: AssetImage("assets/images/sample6.jpg"),
                                                     fit: BoxFit.cover,
                                                   ),
                                                 ),
@@ -601,7 +601,7 @@ class _NewClubPageState extends State<NewClubPage> {
                                                       height: 150.0,
                                                       width: MediaQuery.of(context).size.width/3-8,
                                                       child: Image(
-                                                        image: NetworkImage("https://i.pinimg.com/originals/25/2d/7d/252d7dcd1b10286ffd181b0625de5a1f.jpg"),
+                                                        image: AssetImage("assets/images/sample7.jpg"),
                                                         fit: BoxFit.cover,
                                                       ),
                                                     ),

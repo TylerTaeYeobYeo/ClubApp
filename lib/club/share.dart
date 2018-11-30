@@ -68,11 +68,11 @@ class _ShareFilePageState extends State<ShareFilePage> {
       child: Column(
         children: <Widget>[
           ListTile(
-            leading: Icon(Icons.description),
+            leading: Icon(Icons.description, color: Theme.of(context).primaryColor,),
             title: Text(doc.data['fileName']+".pdf"),
             subtitle: Text(DateFormat.yMd().add_jm().format(doc.data['created'])),
             trailing: PopupMenuButton(
-              icon: Icon(Icons.more_vert), 
+              icon: Icon(Icons.more_vert, color: Theme.of(context).primaryColor), 
               itemBuilder: (BuildContext context) {
                 return [
                   PopupMenuItem(
@@ -266,7 +266,7 @@ class _ShareFilePageState extends State<ShareFilePage> {
                   },
                 ),
                 trailing: IconButton(
-                  icon: Icon(Icons.search),
+                  icon: Icon(Icons.search, color: Theme.of(context).primaryColor),
                   onPressed: (){
                     setState(() {
                       if(first._search.text =="") first.term = Firestore.instance.collection('clubs').document(club.documentID).collection('share').limit(_load).snapshots();

@@ -406,7 +406,7 @@ class _ClubPageState extends State<ClubPage> {
               style: TextStyle(color: Theme.of(context).primaryColorDark, fontWeight: FontWeight.bold),),
             subtitle: Text(typed +" "+ DateFormat.yMd().add_jm().format((data.data['head']['date'].toLocal()))),
             trailing: PopupMenuButton<String>(
-              icon: Icon(Icons.more_vert),
+              icon: Icon(Icons.more_vert, color: Theme.of(context).primaryColor),
               itemBuilder: (BuildContext context) {
                 return setting.map((item){
                   return PopupMenuItem(
@@ -697,7 +697,9 @@ class _ClubPageState extends State<ClubPage> {
                               ),
                             title: ListTile(
                               title: Text(cu.currentUser.getDisplayName()),
-                              subtitle: Text(text),
+                              subtitle: Text(text, style: TextStyle(
+                                color: Theme.of(context).primaryColorLight
+                              ),),
                             ),
                           );
                         },

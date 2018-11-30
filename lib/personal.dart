@@ -85,12 +85,14 @@ class _PersonalPageState extends State<PersonalPage> {
                 child: Column(
                   children: <Widget>[
                     ExpansionTile(
+                      initiallyExpanded: true,
                       title: Text("테마 색상 변경"),
                       children: <Widget>[
                         ListTile(
                           leading: Text("선택된 색상: "),
                           title: colorButton(cu.currentUser.userColor, ""),
                         ),
+                        Divider(),
                         Container(
                           margin: EdgeInsets.symmetric(vertical: 20.0),
                           height: 30.0,
@@ -119,6 +121,7 @@ class _PersonalPageState extends State<PersonalPage> {
                             ],
                           ),
                         ),
+                        Divider(),
                         ListTile(
                           leading: Icon(Icons.help,color:Theme.of(context).primaryColor),
                           title: Text("스크롤해서 원하는 색상을 선택해주세요", style: TextStyle(color: Theme.of(context).primaryColorDark),),

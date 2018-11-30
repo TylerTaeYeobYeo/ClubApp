@@ -221,11 +221,11 @@ class _DatabasePageState extends State<DatabasePage> with SingleTickerProviderSt
       child: Column(
         children: <Widget>[
           ListTile(
-            leading: Icon(Icons.description),
-            title: Text(doc.data['fileName']+".pdf"),
+            leading: Icon(Icons.description, color: Theme.of(context).primaryColor,),
+            title: Text(doc.data['fileName']+".pdf",),
             subtitle: Text(DateFormat.yMd().add_jm().format(doc.data['created'])),
             trailing: PopupMenuButton(
-              icon: Icon(Icons.more_vert), 
+              icon: Icon(Icons.more_vert, color: Theme.of(context).primaryColor,), 
               itemBuilder: (BuildContext context) {
                 return [
                   PopupMenuItem(
@@ -268,7 +268,7 @@ class _DatabasePageState extends State<DatabasePage> with SingleTickerProviderSt
               backgroundImage: NetworkImage(doc.data['photoUrl']),
             ),
             title: Text(doc.data['writer']),
-            subtitle: Text("작성자"),
+            subtitle: Text("작성자",style: TextStyle(color: Theme.of(context).primaryColorLight),),
           ),
         ],
       )
@@ -337,7 +337,7 @@ class _DatabasePageState extends State<DatabasePage> with SingleTickerProviderSt
                         },
                       ),
                       trailing: IconButton(
-                        icon: Icon(Icons.search),
+                        icon: Icon(Icons.search, color: Theme.of(context).primaryColor),
                         onPressed: (){
                           setState(() {
                             if(first._search.text =="") first.term = Firestore.instance.collection('clubs').document(club.documentID).collection('run').where("type", isEqualTo: 0).limit(_load).snapshots();
@@ -395,7 +395,7 @@ class _DatabasePageState extends State<DatabasePage> with SingleTickerProviderSt
                         },
                       ),
                       trailing: IconButton(
-                        icon: Icon(Icons.search),
+                        icon: Icon(Icons.search, color: Theme.of(context).primaryColor),
                         onPressed: (){
                           setState(() {
                             if(second._search.text =="") second.term = Firestore.instance.collection('clubs').document(club.documentID).collection('run').where("type", isEqualTo: 1).limit(_load2).snapshots();
@@ -453,7 +453,7 @@ class _DatabasePageState extends State<DatabasePage> with SingleTickerProviderSt
                         },
                       ),
                       trailing: IconButton(
-                        icon: Icon(Icons.search),
+                        icon: Icon(Icons.search, color: Theme.of(context).primaryColor),
                         onPressed: (){
                           setState(() {
                             if(third._search.text =="") third.term = Firestore.instance.collection('clubs').document(club.documentID).collection('run').where("type", isEqualTo: 2).limit(_load3).snapshots();

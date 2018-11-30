@@ -1,4 +1,4 @@
 {
-      "options":["orange","deepOrange","blue","green"],
-      "selected": "orange"
+      "options":["orange","deepOrange","blue","green","red"],
+      "selected": "green"
 }

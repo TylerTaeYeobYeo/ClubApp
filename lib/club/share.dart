@@ -237,6 +237,9 @@ class _ShareFilePageState extends State<ShareFilePage> {
       ),
       body: Stack(
         children: <Widget>[
+          Center(
+            child: Image.asset('assets/logo/logo1.png',fit: BoxFit.contain,color:Theme.of(context).primaryColor,)
+          ),
           ListView(
             controller: _scrollController,
             children: <Widget>[

@@ -99,104 +99,111 @@ class _CreateDataPageState extends State<CreateDataPage> {
           )
         ],
       ),
-      body: ListView(
+      body: Stack(
         children: <Widget>[
-          Card(
-            child: ListTile(
-              leading: Text("제목:"),
-              title: TextField(
-                controller: _name,
-                keyboardType: TextInputType.multiline,
-                decoration: InputDecoration(
-                  hintText: "ex) 회장 인수인계\n",
-                  helperText: "업로드할 파일의 이름이 됩니다."
-                ),
-              ),
-              trailing: DropdownButton(
-                value: selected,
-                items: <DropdownMenuItem>[
-                  DropdownMenuItem(
-                    value: "인수인계",
-                    child: Text("인수인계"),),
-                  DropdownMenuItem(
-                    value: "활동일지",
-                    child: Text("활동일지"),),
-                  DropdownMenuItem(
-                    value: "회계",
-                    child: Text("회계"),),
-                ], 
-                onChanged: (value) {
-                  setState(() {
-                    selected = value;
-                    switch(selected){
-                      case "인수인계":
-                        index = 0;
-                        break;
-                      case "활동일지":
-                      index = 1;
-                      break;
-                      case "회계":
-                      index=2;
-                      break;
-                    }
-                  });
-                },
-              ),
-            ),
+          Center(
+            child: Image.asset('assets/logo/logo1.png',fit: BoxFit.contain,color:Theme.of(context).primaryColor,)
           ),
-          Card(
-            child: ListTile(
-              leading: Text("설명"),
-              title: Container(
-                padding: EdgeInsets.symmetric(vertical: 20.0),
-                child: TextField(
-                  controller: _description,
-                  keyboardType: TextInputType.multiline,
-                  maxLines: 5,
-                  decoration: InputDecoration(
-                    hintText: "ex) 회장 인수인계에 대한 자세한 설명이 되어있다.",
+          ListView(
+            children: <Widget>[
+              Card(
+                child: ListTile(
+                  leading: Text("제목:"),
+                  title: TextField(
+                    controller: _name,
+                    keyboardType: TextInputType.multiline,
+                    decoration: InputDecoration(
+                      hintText: "ex) 회장 인수인계\n",
+                      helperText: "업로드할 파일의 이름이 됩니다."
+                    ),
                   ),
-                ),
-              )
-            ),
-          ),
-          Card(
-            child: ExpansionTile(
-              leading: Text("파일:"),
-              title: Text("PDF파일형식만 지원합니다"),
-              children: <Widget>[
-                // upload==null?SizedBox():Text(upload.path),
-                upload==null?SizedBox():
-                ListTile(
-                  leading: Icon(Icons.file_upload),
-                  title: Text(_name.text + ".pdf"),
-                  // TextField(
-                  //   controller: _fileNameController,
-                  //   decoration: InputDecoration(
-                  //     hintText: "ex) 2018-2 결산",
-                  //     helperText: "파일이름을 입력해주세요"
-                  //   ),
-                  // ),
-                  trailing: IconButton(
-                    icon: Icon(Icons.close),
-                    onPressed: (){
+                  trailing: DropdownButton(
+                    value: selected,
+                    items: <DropdownMenuItem>[
+                      DropdownMenuItem(
+                        value: "인수인계",
+                        child: Text("인수인계"),),
+                      DropdownMenuItem(
+                        value: "활동일지",
+                        child: Text("활동일지"),),
+                      DropdownMenuItem(
+                        value: "회계",
+                        child: Text("회계"),),
+                    ], 
+                    onChanged: (value) {
                       setState(() {
-                        upload = null;
+                        selected = value;
+                        switch(selected){
+                          case "인수인계":
+                            index = 0;
+                            break;
+                          case "활동일지":
+                          index = 1;
+                          break;
+                          case "회계":
+                          index=2;
+                          break;
+                        }
                       });
                     },
                   ),
                 ),
-                upload==null?ButtonBar(
+              ),
+              Card(
+                child: ListTile(
+                  leading: Text("설명"),
+                  title: Container(
+                    padding: EdgeInsets.symmetric(vertical: 20.0),
+                    child: TextField(
+                      controller: _description,
+                      keyboardType: TextInputType.multiline,
+                      maxLines: 5,
+                      decoration: InputDecoration(
+                        hintText: "ex) 회장 인수인계에 대한 자세한 설명이 되어있다.",
+                      ),
+                    ),
+                  )
+                ),
+              ),
+              Card(
+                child: ExpansionTile(
+                  leading: Text("파일:"),
+                  title: Text("PDF파일형식만 지원합니다"),
                   children: <Widget>[
-                    FlatButton(
-                      child: Text("파일추가"),
-                      onPressed: ()=>_openFileExplorer(),
-                    )
+                    // upload==null?SizedBox():Text(upload.path),
+                    upload==null?SizedBox():
+                    ListTile(
+                      leading: Icon(Icons.file_upload),
+                      title: Text(_name.text + ".pdf"),
+                      // TextField(
+                      //   controller: _fileNameController,
+                      //   decoration: InputDecoration(
+                      //     hintText: "ex) 2018-2 결산",
+                      //     helperText: "파일이름을 입력해주세요"
+                      //   ),
+                      // ),
+                      trailing: IconButton(
+                        icon: Icon(Icons.close),
+                        onPressed: (){
+                          setState(() {
+                            upload = null;
+                          });
+                        },
+                      ),
+                    ),
+                    upload==null?ButtonBar(
+                      children: <Widget>[
+                        FlatButton(
+                          child: Text("파일추가"),
+                          onPressed: ()=>_openFileExplorer(),
+                        )
+                      ],
+                    ):SizedBox(),
                   ],
-                ):SizedBox(),
-              ],
-            ),
-          ),
+                ),
+              ),
+            ],
+          )
         ],
       )
     );

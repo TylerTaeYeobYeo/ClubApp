@@ -77,67 +77,76 @@ class _NewSharePageState extends State<NewSharePage> {
           )
         ],
       ),
-      body: ListView(
+      body: Stack(
         children: <Widget>[
-          Card(
-            child: Column(
-              children: <Widget>[
-                ListTile(
-                  leading: CircleAvatar(
-                    backgroundImage: NetworkImage(cu.currentUser.getphotoUrl()),
-                  ),
-                  title: Text(cu.currentUser.getDisplayName()),
-                  subtitle: Text(DateFormat.yMd().add_jm().format(DateTime.now().toLocal())),
-                ),
-                Divider(),
-                _upload==null?ListTile(
-                  leading: Icon(Icons.folder),
-                  title: Text("현재 PDF파일만 지원합니다."),
-                  trailing: FlatButton(
-                    child: Text("파일 선택"),
-                    onPressed: ()=>_openFileExplorer(),
-                  ),
-                  onTap: ()=>_openFileExplorer(),
-                ):Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
+          Center(
+            child: Image.asset('assets/logo/logo1.png',fit: BoxFit.contain,color:Theme.of(context).primaryColor,)
+          ),
+          ListView(
+            children: <Widget>[
+              Card(
+                child: Column(
                   children: <Widget>[
                     ListTile(
-                      leading: Text("파일명"),
-                      title: Text(_name.text + ".pdf"),
+                      leading: CircleAvatar(
+                        backgroundImage: NetworkImage(cu.currentUser.getphotoUrl()),
+                      ),
+                      title: Text(cu.currentUser.getDisplayName()),
+                      subtitle: Text(DateFormat.yMd().add_jm().format(DateTime.now().toLocal())),
                     ),
-                    ListTile(
+                    Divider(),
+                    _upload==null?ListTile(
                       leading: Icon(Icons.folder),
-                      title: TextField(
-                        controller: _name,
-                        decoration: InputDecoration(
-                          hintText: "파일 이름을 입력해주세요",
-                          helperText: "확장명없이 입력해주세요"
+                      title: Text("현재 PDF파일만 지원합니다."),
+                      trailing: FlatButton(
+                        child: Text("파일 선택"),
+                        onPressed: ()=>_openFileExplorer(),
+                      ),
+                      onTap: ()=>_openFileExplorer(),
+                    ):Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: <Widget>[
+                        ListTile(
+                          leading: Text("파일명"),
+                          title: Text(_name.text + ".pdf"),
                         ),
+                        ListTile(
+                          leading: Icon(Icons.folder),
+                          title: TextField(
+                            controller: _name,
+                            decoration: InputDecoration(
+                              hintText: "파일 이름을 입력해주세요",
+                              helperText: "확장명없이 입력해주세요"
+                            ),
+                          ),
+                        )
+                      ],
+                    ),
+                    Divider(),
+                    ListTile(
+                      leading: Icon(Icons.description),
+                      title: Container(
+                        padding: EdgeInsets.symmetric(vertical: 20.0),
+                        child: TextField(
+                          controller: _description,
+                          decoration: InputDecoration(
+                            hintText: "ex) 로고 벡터 파일",
+                            helperText: "파일에 대한 부연설명을 입력해주세요"
+                          ),
+                          maxLines: 4,
+                          keyboardType: TextInputType.multiline,
+                        )
                       ),
                     )
                   ],
                 ),
-                Divider(),
-                ListTile(
-                  leading: Icon(Icons.description),
-                  title: Container(
-                    padding: EdgeInsets.symmetric(vertical: 20.0),
-                    child: TextField(
-                      controller: _description,
-                      decoration: InputDecoration(
-                        hintText: "ex) 로고 벡터 파일",
-                        helperText: "파일에 대한 부연설명을 입력해주세요"
-                      ),
-                      maxLines: 4,
-                      keyboardType: TextInputType.multiline,
-                    )
-                  ),
-                )
-              ],
-            ),
-          ),
+              ),
+            ],
+          )
         ],
       )
+      
+      
     );
   }
 }

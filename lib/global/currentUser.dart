@@ -1,8 +1,11 @@
 library my_prj.globals;
+
+import 'package:flutter/material.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 class CurrentUser {
+  Color userColor = Colors.orange;
   String _displayName;
   String _email;
   String _photoUrl;

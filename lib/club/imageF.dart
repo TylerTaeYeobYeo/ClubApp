@@ -18,7 +18,7 @@ class ImagePage extends StatelessWidget {
           headerSliverBuilder: (BuildContext context, bool innerBoxIsScrolled){
             return <Widget>[
               SliverAppBar(
-                backgroundColor: Colors.white70,
+                // backgroundColor: Colors.white70,
                 title: Text("업로드 이미지"),
                 centerTitle: true,
                 floating: true,

@@ -305,6 +305,9 @@ class _DatabasePageState extends State<DatabasePage> with SingleTickerProviderSt
       ),
       body: Stack(
         children: <Widget>[
+          Center(
+            child: Image.asset('assets/logo/logo1.png',fit: BoxFit.contain,color:Theme.of(context).primaryColor,)
+          ),
           TabBarView(
             controller: _tabController,
             children: <Widget>[

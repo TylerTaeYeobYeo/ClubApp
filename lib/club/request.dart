@@ -40,7 +40,7 @@ class _RequestPageState extends State<RequestPage> {
                           child: Row(
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: <Widget>[
-                              Text("<<왼쪽으로 밀어서 삭제"),
+                              Text("<<왼쪽으로 밀어서 거절"),
                               Text("오른쪽으로 밀어서 승인>>"),
                             ],
                           ),
@@ -68,9 +68,12 @@ class _RequestPageState extends State<RequestPage> {
                                   ),
                                   title: Text(data.data['name']),
                                   children: <Widget>[
-                                    Container(
-                                      padding: EdgeInsets.all(20.0),
-                                      child: Text(data.data['content']),
+                                    ListTile(
+                                      leading: Text("신청사유:"),
+                                      trailing: Container(
+                                        padding: EdgeInsets.symmetric(vertical: 20.0),
+                                        child: Text(data.data['content']),
+                                      ),
                                     ),
                                     ListTile(
                                       leading: Text("email:"),

@@ -37,16 +37,18 @@ class CurrentUser {
     displayName,
     email,
     photoUrl,
-    uid,
-    phoneNumber
+    uid
+    // phoneNumber
   ){
     this._displayName = displayName;
     this._email = email;
     this._photoUrl = photoUrl;
     this._uid = uid;
-    this._phoneNumber = phoneNumber;
+    // this._phoneNumber = phoneNumber;
   }
-
+  setPhoneNumber(String phoneNumber){
+    this._phoneNumber= phoneNumber;
+  }
   void clear(){
     _displayName = null;
     _email = null;

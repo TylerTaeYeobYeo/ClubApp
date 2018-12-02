@@ -139,7 +139,7 @@ class LoginPageState extends State<LoginPage>{
       idToken: googleSignInAuthentication.idToken,
       accessToken: googleSignInAuthentication.accessToken
     );
-    print(user);
+    // print(user);
     return user;
   }
   void setCurrentUser(FirebaseUser user){
@@ -147,8 +147,8 @@ class LoginPageState extends State<LoginPage>{
       user.displayName,
       user.email,
       user.photoUrl,
-      user.uid,
-      user.phoneNumber
+      user.uid
+      // user.phoneNumber
     );
   }
   void _updateUserData(BuildContext context, FirebaseUser user)async {
@@ -159,6 +159,7 @@ class LoginPageState extends State<LoginPage>{
     await Firestore.instance.collection('users').document(user.uid).get().then((doc){
       if (doc.exists){
         cu.currentUser.setAdmin(doc.data['admin']);
+        cu.currentUser.setPhoneNumber(doc.data['phoneNumber']);
         Firestore.instance.collection('users').document(user.uid).updateData({
           "uid": user.uid,
           "photoUrl":user.photoUrl,
@@ -166,6 +167,7 @@ class LoginPageState extends State<LoginPage>{
           "email":user.email,
           // "phoneNumber":user.phoneNumber,
         });
+
       }
       else {
         //new user
@@ -174,8 +176,9 @@ class LoginPageState extends State<LoginPage>{
           "photoUrl":user.photoUrl,
           "displayName":user.displayName,
           "email":user.email,
-          "phoneNumber":user.phoneNumber,
+          "phoneNumber":null,
         });
+        cu.currentUser.setPhoneNumber(null);
       }
       Navigator.pushNamed(context, '/home');
     });

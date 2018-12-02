@@ -14,10 +14,17 @@ class PersonalPage extends StatefulWidget {
 class _PersonalPageState extends State<PersonalPage> {
 
   ScrollController _scrollController = ScrollController();
-
+  TextEditingController _phone =TextEditingController();
   
+  void initState() { 
+    super.initState();
+    if(cu.currentUser.getPhoneNumber()!=null){
+      _phone.text = cu.currentUser.getPhoneNumber();
+    }
+  }
   @override
   void dispose() { 
+    _phone.dispose();
     _scrollController.dispose();
     super.dispose();
   }
@@ -230,15 +237,35 @@ class _PersonalPageState extends State<PersonalPage> {
                       // initiallyExpanded: true,
                       title: Text("로그인정보"),
                       children: <Widget>[
-                        ListTile(
-                          trailing: Text("개인정보 변경은 정보제공처에서 부탁드립니다",style: TextStyle(color: Theme.of(context).primaryColorDark),),
-                        ),
+                        // ListTile(
+                        //   trailing: Text("프로필 이미지 변경은 정보제공처에서 부탁드립니다",style: TextStyle(color: Theme.of(context).primaryColorDark),),
+                        // ),
                         ListTile(
                           leading: Icon(Icons.image, color:Theme.of(context).primaryColorDark),
                           title: Text("프로필 이미지"),
                           trailing: CircleAvatar(
                             backgroundImage: NetworkImage(cu.currentUser.getphotoUrl()),
                           ),
+                          onTap: (){
+                            showDialog(
+                              context: context,
+                              builder: (context){
+                                return SimpleDialog(
+                                  title: Text("프로필 이미지"),
+                                  children: <Widget>[
+                                    ListTile(
+                                      leading: Text("url:"),
+                                      title: Text(cu.currentUser.getphotoUrl()),
+                                    ),
+                                    ListTile(
+                                      leading: Text("안내:"),
+                                      title: Text("프로필이미지 변경은 정보 제공처에서 부탁드립니다."),
+                                    )
+                                  ],
+                                );
+                              }
+                            );
+                          },
                           onLongPress: (){
                             Clipboard.setData(ClipboardData(text: cu.currentUser.getphotoUrl()));
                             key.currentState.showSnackBar(
@@ -259,6 +286,45 @@ class _PersonalPageState extends State<PersonalPage> {
                           leading: Icon(Icons.call,color:Theme.of(context).primaryColorDark),
                           title: Text("전화번호"),
                           trailing: Text(cu.currentUser.getPhoneNumber().toString()),
+                          onTap: (){
+                            showDialog(
+                              context: context,
+                              builder: (context){
+                                return AlertDialog(
+                                  title: Text("전화번호 변경"),
+                                  content: TextField(
+                                    controller: _phone,
+                                    maxLength: 13,
+                                    decoration: InputDecoration(
+                                      hintText: "ex) 010-1234-5678",
+                                      helperText: "-를 포함해서 전화번호를 입력해주세요"
+                                    ),
+                                  ),
+                                  actions: <Widget>[
+                                    FlatButton(
+                                      child: Text("취소"),
+                                      onPressed: (){
+                                        Navigator.pop(context);
+                                        if(cu.currentUser.getPhoneNumber != null)_phone.text = cu.currentUser.getPhoneNumber();
+                                        else _phone.clear();
+                                      }
+                                    ),
+                                    RaisedButton(
+                                      child: Text("확인",style: TextStyle(color: Colors.white),),
+                                      onPressed: (){
+                                        Navigator.pop(context);
+                                        String number = _phone.text;
+                                        Firestore.instance.collection('users').document(cu.currentUser.getUid()).updateData({
+                                          "phoneNumber": number,
+                                        });
+                                        cu.currentUser.setPhoneNumber(_phone.text);
+                                      },
+                                    )
+                                  ],
+                                );
+                              }
+                            );
+                          },
                           onLongPress: (){
                             Clipboard.setData(ClipboardData(text: cu.currentUser.getPhoneNumber().toString()));
                             key.currentState.showSnackBar(

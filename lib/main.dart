@@ -28,7 +28,7 @@ class RouteAppPage extends State<RouteApp>{
  
     if(await data.exists()){
       Map<String, dynamic> jsonResult = json.decode(data.readAsStringSync());
-      print(jsonResult['selected']);
+      // print(jsonResult['selected']);
       setState(() {
         switch(jsonResult['selected']){
           case "red":
@@ -85,7 +85,7 @@ class RouteAppPage extends State<RouteApp>{
       });
     }
     else {
-      print('none');
+      // print('none');
       Map<String,String> input = {"selected": "orange"};
       File file = File(dir.path + "/color.json");
       file.createSync();
@@ -139,6 +139,7 @@ class LoginPageState extends State<LoginPage>{
       idToken: googleSignInAuthentication.idToken,
       accessToken: googleSignInAuthentication.accessToken
     );
+    print(user);
     return user;
   }
   void setCurrentUser(FirebaseUser user){
@@ -163,7 +164,7 @@ class LoginPageState extends State<LoginPage>{
           "photoUrl":user.photoUrl,
           "displayName":user.displayName,
           "email":user.email,
-          "phoneNumber":user.phoneNumber,
+          // "phoneNumber":user.phoneNumber,
         });
       }
       else {

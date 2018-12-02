@@ -110,7 +110,7 @@ class _ShareFilePageState extends State<ShareFilePage> {
             ),
             title: Text(doc.data['writer']),
             subtitle: Text("작성자"),
-            trailing: (doc.data['uid']==cu.currentUser.getUid||cu.currentUser.club.getLevel()==3)?IconButton(
+            trailing: (doc.data['uid']==cu.currentUser.getUid()||cu.currentUser.club.getLevel()==3)?IconButton(
               icon: Icon(Icons.delete),
               color: Theme.of(context).primaryColor,
               onPressed: ()=>deleteFile(doc),
